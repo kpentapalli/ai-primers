@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Follows Andrew Ng&#x27;s DeepLearning.AI course &#x27;Agentic AI&#x27; (Coursera, updated September 2026) at leadership altitude: the autonomy spectrum, why iteration beats a bigger model, the four design patterns, and the evaluation discipline that separates demos from products.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🤖%3C/text%3E%3C/svg%3E">
+<title>Agentic AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#EBEFF4; --ink:#151A22; --ink-2:#4A5361; --ink-3:#7A8494; --line:#D5DBE4; --line-2:#E6EAF0;
+  --accent:#2A78D6; --accent-ink:#FFFFFF;
+  --data:#2A78D6;  --data-fill:#E2EDFA;
+  --model:#4A3AA7; --model-fill:#E8E5F6;
+  --human:#EB6834; --human-fill:#FBE7DE;
+  --tool:#1B9E6E;  --tool-fill:#DDF3E9;
+  --risk:#E34948;  --risk-fill:#FAE2E2;
+  --neutral:#6B7686; --neutral-fill:#ECEFF3;
+  --shadow:0 1px 2px rgba(21,26,34,.06),0 8px 24px -12px rgba(21,26,34,.18);
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding-block:0 48px;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.02;letter-spacing:-.02em}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:700;line-height:1.15}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.caps{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+
+/* masthead */
+.masthead{padding-block:36px 24px;border-bottom:1px solid var(--line);display:grid;gap:14px}
+.series{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.series .mod{color:var(--accent);font-weight:500}
+.lede{font-size:18px;color:var(--ink-2);max-width:62ch}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:6px}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;user-select:none}
+.switch input{appearance:none;width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(16px)}
+.btn{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink-3)}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink-2);align-items:center}
+.key .caps{margin-right:2px}
+.sw{display:inline-flex;align-items:center;gap:6px}
+.sw i{width:14px;height:14px;border-radius:4px;border:2px solid;display:inline-block}
+.sw-data i{border-color:var(--data);background:var(--data-fill)}
+.sw-model i{border-color:var(--model);background:var(--model-fill)}
+.sw-human i{border-color:var(--human);background:var(--human-fill)}
+.sw-tool i{border-color:var(--tool);background:var(--tool-fill)}
+.sw-risk i{border-color:var(--risk);background:var(--risk-fill)}
+.modlinks{display:flex;gap:8px;flex-wrap:wrap}
+.modlinks a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--ink-2);background:var(--surface)}
+.modlinks a[aria-current]{border-color:var(--accent);color:var(--accent);font-weight:600}
+
+/* layout */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;align-items:start;padding-top:28px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);font-size:14px;display:grid;gap:2px;max-height:calc(100vh - 32px);overflow:auto}
+.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-2);padding:6px 10px;border-radius:8px;border-left:2px solid transparent}
+.toc a .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);min-width:18px}
+.toc a:hover{background:var(--surface)}
+.toc a.on{color:var(--ink);font-weight:600;background:var(--surface);border-left-color:var(--accent)}
+.toc .grp{margin-top:10px}
+main{display:grid;gap:56px;min-width:0}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;gap:20px}
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;max-height:none;padding-block:8px;margin-inline:-16px;padding-inline:16px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface);font-size:13px}
+  .toc a.on{border-color:var(--accent)}
+  .toc .grp{margin-top:0}
+}
+
+/* lesson */
+.lesson{display:grid;gap:18px;scroll-margin-top:24px;min-width:0}
+.lesson-head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.num{font-family:var(--mono);font-size:13px;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:3px 7px;margin-top:4px}
+.thesis{font-family:var(--display);font-size:clamp(18px,2vw,21px);font-weight:500;line-height:1.35;color:var(--ink);max-width:60ch;border-left:3px solid var(--accent);padding-left:14px}
+figure.diagram{margin:0;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;box-shadow:var(--shadow)}
+figure.diagram .wrap{overflow-x:auto;min-width:0}
+figure.diagram svg{display:block;width:100%;height:auto;min-width:520px;max-width:100%;font-family:var(--body)}
+figcaption{font-size:14px;color:var(--ink-2);margin-top:10px;max-width:70ch}
+.notes{display:none;background:var(--human-fill);border:1px dashed var(--human);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--ink)}
+.notes .caps{color:var(--human);display:block;margin-bottom:4px}
+:root[data-notes="on"] .notes{display:block}
+details.disc{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+details.disc summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:10px}
+details.disc summary::-webkit-details-marker{display:none}
+details.disc summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(-45deg);transition:transform .15s;flex:none}
+details.disc[open] summary::before{transform:rotate(45deg)}
+details.disc .body{padding:0 16px 14px 32px;font-size:15px;color:var(--ink-2);display:grid;gap:10px}
+details.disc ul,details.disc ol{margin:0;padding-left:18px;display:grid;gap:6px}
+details.why summary::after{content:"Director view";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+details.deeper summary::after{content:"Mechanics";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--model)}
+details.basics summary::after{content:"From zero";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--tool)}
+.disc-row{display:grid;gap:10px}
+strong{color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.tblwrap{overflow-x:auto;min-width:0}
+
+/* end sections */
+.endsec{display:grid;gap:14px;scroll-margin-top:24px;min-width:0}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gloss div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink-2)}
+.gloss b{display:block;color:var(--ink);font-family:var(--display);font-size:15px}
+.qs{display:grid;gap:8px;padding-left:0;margin:0;list-style:none;counter-reset:q}
+.qs li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 44px;position:relative;font-size:15px}
+.qs li::before{counter-increment:q;content:counter(q);position:absolute;left:14px;top:10px;font-family:var(--mono);font-size:12px;color:var(--accent)}
+.reads{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.reads li{font-size:14.5px;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--line)}
+.reads b{color:var(--ink)}
+.footer{margin-top:56px;border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}
+.footer a{text-decoration:none;font-weight:600}
+
+/* diagram element classes (inline SVG picks up page tokens) */
+.dg .tx{fill:var(--ink)}
+.dg .tx-muted{fill:var(--ink-2)}
+.dg .tx-on{fill:#fff}
+.dg .tx-data{fill:var(--data)} .dg .tx-model{fill:var(--model)} .dg .tx-human{fill:var(--human)} .dg .tx-tool{fill:var(--tool)} .dg .tx-risk{fill:var(--risk)} .dg .tx-neutral{fill:var(--ink-2)}
+.dg .caps{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.dg .halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.dg .bx{stroke-width:1.6}
+.dg .bx-data{fill:var(--data-fill);stroke:var(--data)} .dg .bx-model{fill:var(--model-fill);stroke:var(--model)} .dg .bx-human{fill:var(--human-fill);stroke:var(--human)} .dg .bx-tool{fill:var(--tool-fill);stroke:var(--tool)} .dg .bx-risk{fill:var(--risk-fill);stroke:var(--risk)} .dg .bx-neutral{fill:var(--neutral-fill);stroke:var(--neutral)}
+.dg .dashed{stroke-dasharray:5 4}
+.dg .fr{fill:none;stroke-width:1.2;stroke-dasharray:4 4}
+.dg .fr-data{stroke:var(--data)} .dg .fr-model{stroke:var(--model)} .dg .fr-human{stroke:var(--human)} .dg .fr-tool{stroke:var(--tool)} .dg .fr-risk{stroke:var(--risk)} .dg .fr-neutral{stroke:var(--line)}
+.dg .st{stroke:none} .dg .st-data{fill:var(--data)} .dg .st-model{fill:var(--model)} .dg .st-human{fill:var(--human)} .dg .st-tool{fill:var(--tool)} .dg .st-risk{fill:var(--risk)} .dg .st-neutral{fill:var(--neutral)}
+.dg .dt{stroke:var(--surface);stroke-width:2} .dg .dt-data{fill:var(--data)} .dg .dt-model{fill:var(--model)} .dg .dt-human{fill:var(--human)} .dg .dt-tool{fill:var(--tool)} .dg .dt-risk{fill:var(--risk)} .dg .dt-neutral{fill:var(--neutral)}
+.dg .ln{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dg .ln-neutral{stroke:var(--ink-2)} .dg .ln-data{stroke:var(--data)} .dg .ln-model{stroke:var(--model)} .dg .ln-human{stroke:var(--human)} .dg .ln-tool{stroke:var(--tool)} .dg .ln-risk{stroke:var(--risk)} .dg .ln-faint{stroke:var(--line)}
+.dg .fl{stroke:none} .dg .fl.ln-data{fill:var(--data-fill)} .dg .fl.ln-model{fill:var(--model-fill)} .dg .fl.ln-neutral{fill:var(--neutral-fill)} .dg .fl.ln-risk{fill:var(--risk-fill)} .dg .fl.ln-tool{fill:var(--tool-fill)} .dg .fl.ln-human{fill:var(--human-fill)}
+.dg .ah{stroke:none} .dg .ah-neutral{fill:var(--ink-2)} .dg .ah-data{fill:var(--data)} .dg .ah-model{fill:var(--model)} .dg .ah-human{fill:var(--human)} .dg .ah-tool{fill:var(--tool)} .dg .ah-risk{fill:var(--risk)}
+.dg .bar{fill:var(--data)} .dg .grid{stroke:var(--line-2)}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="masthead">
+  <div class="series"><span>Visual primers for product leaders</span><span>·</span><span class="mod">Module 4 of 4</span></div>
+  <h1>Agentic AI</h1>
+  <p class="lede">Follows Andrew Ng's DeepLearning.AI course 'Agentic AI' (Coursera, updated September 2026) at leadership altitude: the autonomy spectrum, why iteration beats a bigger model, the four design patterns, and the evaluation discipline that separates demos from products.</p>
+  <div class="modlinks"><a href="./">← All modules</a><a href="ai-foundations.html">1. AI Foundations</a><a href="ml-fundamentals.html">2. ML Fundamentals</a><a href="spec-driven-development.html">3. Spec-Driven Development</a><a href="agentic-ai.html" aria-current="page">4. Agentic AI</a></div>
+  <div class="toolbar">
+    <label class="switch"><input type="checkbox" id="notes-toggle"> Teaching notes</label>
+    <button class="btn" id="expand-all" type="button">Expand all</button>
+    <div class="key"><span class="caps">Colour key</span><span class="sw sw-data"><i></i>Data</span><span class="sw sw-model"><i></i>Model / compute</span><span class="sw sw-human"><i></i>People</span><span class="sw sw-tool"><i></i>Tools &amp; systems</span><span class="sw sw-risk"><i></i>Risk</span></div>
+  </div>
+</header>
+<div class="layout">
+<nav class="toc" aria-label="Sections"><a href="#spectrum"><span class="n">01</span><span>The autonomy spectrum</span></a><a href="#why-iterate"><span class="n">02</span><span>Why iteration wins</span></a><a href="#decomposition"><span class="n">03</span><span>Task decomposition</span></a><a href="#patterns"><span class="n">04</span><span>Four design patterns</span></a><a href="#reflection"><span class="n">05</span><span>Reflection</span></a><a href="#tools"><span class="n">06</span><span>Tool use</span></a><a href="#evals"><span class="n">07</span><span>Evals</span></a><a href="#error-analysis"><span class="n">08</span><span>Error analysis</span></a><a href="#build-analyze"><span class="n">09</span><span>The build-analyse loop</span></a><a href="#planning"><span class="n">10</span><span>Planning</span></a><a href="#multi-agent"><span class="n">11</span><span>Multi-agent</span></a><a class="grp" href="#glossary"><span class="n">G</span><span>Glossary</span></a><a href="#questions"><span class="n">Q</span><span>Questions to ask</span></a><a href="#reading"><span class="n">R</span><span>Reading list</span></a></nav>
+<main>
+<section class="lesson" id="spectrum">
+<div class="lesson-head"><span class="num">01</span><h2>Agentic is a dial, not a switch, and most value sits in the middle</h2></div>
+<p class="thesis">Andrew Ng's first move is to retire the argument about what 'counts' as an agent. Every workflow has a degree of autonomy, from a single prompt to a model that designs its own plan. The business question is which setting a given job needs.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="A horizontal spectrum from a single prompt to a fixed workflow, to the model choosing tools, to the model planning and writing its own tools; autonomy increases left to right" xmlns="http://www.w3.org/2000/svg">
+<line class="ln ln-neutral" x1="40" y1="120" x2="720" y2="120" style="stroke-width:3"/>
+<polygon class="ah ah-neutral" points="728.0,120.0 719.0,124.5 719.0,115.5"/>
+<text class="tx tx-muted" x="40" y="96" text-anchor="start" style="font-size:11px">less autonomous</text>
+<text class="tx tx-muted" x="720" y="96" text-anchor="end" style="font-size:11px">more autonomous</text>
+<circle class="dt dt-human" cx="90" cy="120" r="9"/>
+<rect class="bx bx-human" x="10" y="150" width="160" height="52" rx="10"/>
+<text class="tx tx-human" x="90.0" y="173.0" text-anchor="middle" style="font-size:12px;font-weight:600">Single prompt</text>
+<text class="tx tx-muted" x="90.0" y="189.0" text-anchor="middle" style="font-size:11px">one call, one answer</text>
+<text class="tx tx-muted" x="90" y="226" text-anchor="middle" style="font-size:10.5px">&#x27;summarise this&#x27;</text>
+<circle class="dt dt-tool" cx="270" cy="120" r="9"/>
+<rect class="bx bx-tool" x="190" y="150" width="160" height="52" rx="10"/>
+<text class="tx tx-tool" x="270.0" y="173.0" text-anchor="middle" style="font-size:12px;font-weight:600">Fixed workflow</text>
+<text class="tx tx-muted" x="270.0" y="189.0" text-anchor="middle" style="font-size:11px">developer fixes the steps</text>
+<text class="tx tx-muted" x="270" y="226" text-anchor="middle" style="font-size:10.5px">draft → critique → revise</text>
+<circle class="dt dt-model" cx="450" cy="120" r="9"/>
+<rect class="bx bx-model" x="370" y="150" width="160" height="52" rx="10"/>
+<text class="tx tx-model" x="450.0" y="173.0" text-anchor="middle" style="font-size:12px;font-weight:600">Model picks tools</text>
+<text class="tx tx-muted" x="450.0" y="189.0" text-anchor="middle" style="font-size:11px">LLM picks the next tool</text>
+<text class="tx tx-muted" x="450" y="226" text-anchor="middle" style="font-size:10.5px">&#x27;look this up, then reply&#x27;</text>
+<circle class="dt dt-model" cx="630" cy="120" r="9"/>
+<rect class="bx bx-model" x="550" y="150" width="160" height="52" rx="10"/>
+<text class="tx tx-model" x="630.0" y="173.0" text-anchor="middle" style="font-size:12px;font-weight:600">Model plans</text>
+<text class="tx tx-muted" x="630.0" y="189.0" text-anchor="middle" style="font-size:11px">LLM designs the workflow</text>
+<text class="tx tx-muted" x="630" y="226" text-anchor="middle" style="font-size:10.5px">&#x27;research and report on X&#x27;</text>
+<text class="tx" x="380" y="40" text-anchor="middle" style="font-size:12px;font-weight:600">&#x27;Agentic&#x27; is an adjective and a dial, not a yes/no label</text>
+<text class="tx tx-muted" x="380" y="58" text-anchor="middle" style="font-size:11px">Ng&#x27;s framing: stop arguing about what counts as an agent; ask how much autonomy a workflow has</text>
+<rect class="fr fr-tool" x="190" y="140" width="360" height="100" rx="14"/>
+<text class="tx tx-muted" x="370" y="262" text-anchor="middle" style="font-size:11px">most business value today sits in the middle two: reliable, measurable, still automated</text>
+<text class="tx tx-muted" x="370" y="280" text-anchor="middle" style="font-size:11px">the far right is powerful and least predictable; earn your way there</text>
+</svg></div><figcaption>Course Module 1, 'What is agentic AI?' and 'Degrees of autonomy'. Left of the dashed frame is what most teams already do; right of it is where predictability drops and evaluation becomes non-negotiable.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Have the learner place three internal workflows on the dial. Then ask what would change if each moved one notch right: what new failure could occur, and who would notice? That question sets up evals in section 7.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Roadmaps should name the autonomy level, not just 'add an agent'. A fixed workflow and a planning agent have different costs, risks, and review needs.</li><li>Vendors sell the far right; production runs in the middle. Ask any vendor demo which notch it is really at.</li><li>You can move right incrementally. Start with a fixed workflow, then let the model choose among a few tools, then let it plan. Each step is measurable.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Ng's course describes three practical degrees: <strong>low</strong> (the developer codes the sequence of LLM calls and tool calls), <strong>medium</strong> (the LLM chooses which of a fixed set of tools or steps to run and in what order), and <strong>high</strong> (the LLM plans, may write code or new tools, and adapts when a step fails). Module 5 covers the high end under 'Patterns for highly autonomous agents'. The course's own summary: agentic workflows 'plan multi-step processes, execute them iteratively, and improve outputs through reflection and tool use'.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>workflow</strong> is an ordered set of steps that turns an input into an output. An <strong>LLM call</strong> is one request to the model with a prompt. <strong>Hard-coded</strong> means the sequence is written by a developer and does not change at run time.</p></div></details>
+</div></section>
+<section class="lesson" id="why-iterate">
+<div class="lesson-head"><span class="num">02</span><h2>Letting a model iterate beats upgrading to a bigger model</h2></div>
+<p class="thesis">Ng's headline evidence: wrapping an older model in a loop of drafting, testing, and revising lifted coding accuracy far more than the jump to the next-generation model did. The workflow, not the model, was the bigger lever.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 230" role="img" aria-label="Bar chart: on the HumanEval coding benchmark, GPT-3.5 zero-shot scores 48.1 percent, GPT-4 zero-shot 67.0 percent, and GPT-3.5 inside an agentic workflow up to 95.1 percent" xmlns="http://www.w3.org/2000/svg">
+<text class="tx" x="330" y="48" text-anchor="end" style="font-size:12px">GPT-3.5, single prompt (zero-shot)</text>
+<rect class="bar" x="345" y="30" width="183" height="28" rx="4"/>
+<text class="tx" x="535.78" y="48" text-anchor="start" style="font-size:12px;font-weight:600">48.1%</text>
+<text class="tx" x="330" y="100" text-anchor="end" style="font-size:12px">GPT-4, single prompt (zero-shot)</text>
+<rect class="bar" x="345" y="82" width="255" height="28" rx="4"/>
+<text class="tx" x="607.6" y="100" text-anchor="start" style="font-size:12px;font-weight:600">67.0%</text>
+<text class="tx" x="330" y="152" text-anchor="end" style="font-size:12px">GPT-3.5 in an iterative agentic workflow</text>
+<rect class="bar" x="345" y="134" width="361" height="28" rx="4"/>
+<text class="tx" x="714.3799999999999" y="152" text-anchor="start" style="font-size:12px;font-weight:600">95.1%</text>
+<line class="ln ln-faint" x1="345" y1="20" x2="345" y2="190"/>
+<text class="tx tx-muted" x="380" y="212" text-anchor="middle" style="font-size:11px">share of HumanEval coding problems solved (Ng, The Batch, March 2024)</text>
+</svg></div><figcaption>Course Module 1, 'Benefits of agentic AI'. Ng's own words: the improvement from GPT-3.5 to GPT-4 'is dwarfed by incorporating an iterative agent workflow'. Single measure, so one colour.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask the learner why the third bar is so much higher: the workflow lets the model check its work and try again, the way a person writes a draft and revises. Then ask what that means for the 'wait for the next model' strategy.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Budget for workflow engineering before budgeting for frontier-model spend. The loop is cheaper and often more effective.</li><li>Model upgrades still matter, but they compound with a good workflow rather than replacing one.</li><li>The same logic applies to your own product: a smaller model in a well-designed loop can beat a bigger model called once.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>The comparison comes from Ng's March 2024 letter in The Batch, using the HumanEval benchmark of coding problems. Other benefits the course lists: agentic workflows can run steps in parallel (fetch nine web pages at once and then synthesise), they are modular (swap a component without rewriting the system), and they can exceed human speed on repetitive multi-step jobs. The cost is more LLM calls per task, which is why Module 4 spends time on latency and cost.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Zero-shot</strong> means one prompt, no examples, no retries. A <strong>benchmark</strong> is a fixed test set used to compare models; HumanEval is a set of programming problems with automatic checks. <strong>Accuracy</strong> here is the share of problems whose code passes the tests.</p></div></details>
+</div></section>
+<section class="lesson" id="decomposition">
+<div class="lesson-head"><span class="num">03</span><h2>The first design skill is breaking a job into the steps a person would take</h2></div>
+<p class="thesis">Before any code, write down how a competent person does the task: gather, outline, draft, critique, revise. Each step becomes an LLM call or a tool call, and each hand-off becomes a place you can inspect and measure.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 320" role="img" aria-label="The course&#x27;s research agent decomposed into steps: plan search queries, run searches in parallel, fetch pages, synthesise, write the report, reflect and revise" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="16" y="130" width="110" height="56" rx="10"/>
+<text class="tx tx-human" x="71.0" y="155.0" text-anchor="middle" style="font-size:13px;font-weight:600">Topic</text>
+<text class="tx tx-muted" x="71.0" y="171.0" text-anchor="middle" style="font-size:11px">from the user</text>
+<rect class="bx bx-model" x="150" y="130" width="120" height="56" rx="10"/>
+<text class="tx tx-model" x="210.0" y="155.0" text-anchor="middle" style="font-size:13px;font-weight:600">Plan queries</text>
+<text class="tx tx-muted" x="210.0" y="171.0" text-anchor="middle" style="font-size:11px">3 to 5 searches</text>
+<rect class="bx bx-tool" x="300" y="60" width="120" height="44" rx="10"/>
+<text class="tx tx-tool" x="360.0" y="79.0" text-anchor="middle" style="font-size:12px;font-weight:600">Search + fetch</text>
+<text class="tx tx-muted" x="360.0" y="95.0" text-anchor="middle" style="font-size:11px">page 1</text>
+<rect class="bx bx-tool" x="300" y="130" width="120" height="44" rx="10"/>
+<text class="tx tx-tool" x="360.0" y="149.0" text-anchor="middle" style="font-size:12px;font-weight:600">Search + fetch</text>
+<text class="tx tx-muted" x="360.0" y="165.0" text-anchor="middle" style="font-size:11px">page 2</text>
+<rect class="bx bx-tool" x="300" y="200" width="120" height="44" rx="10"/>
+<text class="tx tx-tool" x="360.0" y="219.0" text-anchor="middle" style="font-size:12px;font-weight:600">Search + fetch</text>
+<text class="tx tx-muted" x="360.0" y="235.0" text-anchor="middle" style="font-size:11px">page n</text>
+<rect class="bx bx-model" x="450" y="130" width="120" height="56" rx="10"/>
+<text class="tx tx-model" x="510.0" y="155.0" text-anchor="middle" style="font-size:13px;font-weight:600">Synthesise</text>
+<text class="tx tx-muted" x="510.0" y="171.0" text-anchor="middle" style="font-size:11px">notes → outline</text>
+<rect class="bx bx-model" x="600" y="130" width="140" height="56" rx="10"/>
+<text class="tx tx-model" x="670.0" y="155.0" text-anchor="middle" style="font-size:13px;font-weight:600">Write report</text>
+<text class="tx tx-muted" x="670.0" y="171.0" text-anchor="middle" style="font-size:11px">draft</text>
+<line class="ln ln-neutral" x1="126" y1="158" x2="140.0" y2="158.0"/>
+<polygon class="ah ah-neutral" points="148.0,158.0 139.0,162.5 139.0,153.5"/>
+<line class="ln ln-neutral" x1="270" y1="158" x2="295.2" y2="89.5"/>
+<polygon class="ah ah-neutral" points="298.0,82.0 299.1,92.0 290.7,88.9"/>
+<line class="ln ln-neutral" x1="270" y1="158" x2="290.2" y2="153.7"/>
+<polygon class="ah ah-neutral" points="298.0,152.0 290.1,158.3 288.3,149.5"/>
+<line class="ln ln-neutral" x1="270" y1="158" x2="294.8" y2="214.7"/>
+<polygon class="ah ah-neutral" points="298.0,222.0 290.3,215.6 298.5,212.0"/>
+<line class="ln ln-neutral" x1="420" y1="82" x2="445.0" y2="144.6"/>
+<polygon class="ah ah-neutral" points="448.0,152.0 440.5,145.3 448.8,142.0"/>
+<line class="ln ln-neutral" x1="420" y1="152" x2="440.2" y2="156.3"/>
+<polygon class="ah ah-neutral" points="448.0,158.0 438.3,160.5 440.1,151.7"/>
+<line class="ln ln-neutral" x1="420" y1="222" x2="444.5" y2="171.2"/>
+<polygon class="ah ah-neutral" points="448.0,164.0 448.1,174.1 440.0,170.1"/>
+<line class="ln ln-neutral" x1="570" y1="158" x2="590.0" y2="158.0"/>
+<polygon class="ah ah-neutral" points="598.0,158.0 589.0,162.5 589.0,153.5"/>
+<text class="tx tx-tool" x="360" y="40" text-anchor="middle" style="font-size:11px;font-weight:600">in parallel</text>
+<polyline class="ln ln-model dashed" points="670,186 670,260 510,260 510.0,196.0" fill="none"/>
+<polygon class="ah ah-model" points="510.0,188.0 514.5,197.0 505.5,197.0"/>
+<text class="tx tx-muted halo" x="590" y="252" text-anchor="middle" style="font-size:11px">reflect: critique the draft, revise</text>
+<text class="tx tx-muted" x="380" y="296" text-anchor="middle" style="font-size:11px">each box is a step a person would also take; each arrow is a place you can measure</text>
+</svg></div><figcaption>Course Module 1, 'Task decomposition: identifying the steps in a workflow', shown on the course's own research-agent example (which learners run in 'Try the research agent'). Parallel branches are the speed win; the dashed loop is the quality win.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Pick a real task from the learner's team (a weekly competitor summary, a customer reply). Whiteboard the steps a good employee takes. That whiteboard is the workflow; note where they would iterate and where they would look something up.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Decomposition is a product and operations skill, not an engineering one. Whoever understands the work best should draw the steps.</li><li>Explicit steps are what make the system measurable. A single mega-prompt cannot be debugged; a five-step workflow can.</li><li>Parallel steps are where the speed gains hide. Look for independent lookups that today run one after another.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Ng's standard illustration is essay writing: research, outline, first draft, self-critique, revision, rather than asking for the essay in one shot. The course extends this to business processes: identify where a human would iterate (reflection), where they would look something up or act (tool use), and where the sequence is not knowable in advance (planning). Steps that are independent should run concurrently. The decomposition also decides your eval strategy: every step boundary is a place to add a component-level check (section 7).</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Concurrency</strong> or <strong>parallelism</strong> means running independent steps at the same time. A <strong>hand-off</strong> is the output of one step becoming the input of the next. A <strong>trace</strong> is the recorded sequence of calls and outputs for one run.</p></div></details>
+</div></section>
+<section class="lesson" id="patterns">
+<div class="lesson-head"><span class="num">04</span><h2>Four design patterns cover agentic AI, and two of them are safe to start with today</h2></div>
+<p class="thesis">Reflection and tool use are mature and give reliable improvements. Planning and multi-agent collaboration are more powerful and harder to predict. Ng's advice is to master the first two, then earn the right to the second two.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 320" role="img" aria-label="Two-by-two of the four agentic design patterns: reflection and tool use on the reliable side, planning and multi-agent collaboration on the powerful but less predictable side" xmlns="http://www.w3.org/2000/svg">
+<line class="ln ln-neutral" x1="60" y1="280" x2="720" y2="280"/>
+<line class="ln ln-neutral" x1="60" y1="280" x2="60" y2="30"/>
+<text class="tx tx-muted" x="390" y="304" text-anchor="middle" style="font-size:11px">predictability of results  →</text>
+<text class="tx tx-muted" x="40" y="150" text-anchor="middle" style="font-size:11px">power</text>
+<rect class="bx bx-model" x="440" y="200" width="130" height="60" rx="10"/>
+<text class="tx tx-model" x="505.0" y="227.0" text-anchor="middle" style="font-size:13px;font-weight:600">Reflection</text>
+<text class="tx tx-muted" x="505.0" y="243.0" text-anchor="middle" style="font-size:11px">critique and revise</text>
+<rect class="bx bx-tool" x="580" y="200" width="130" height="60" rx="10"/>
+<text class="tx tx-tool" x="645.0" y="227.0" text-anchor="middle" style="font-size:13px;font-weight:600">Tool use</text>
+<text class="tx tx-muted" x="645.0" y="243.0" text-anchor="middle" style="font-size:11px">search, act, run code</text>
+<rect class="bx bx-model" x="130" y="68" width="140" height="60" rx="10"/>
+<text class="tx tx-model" x="200.0" y="95.0" text-anchor="middle" style="font-size:13px;font-weight:600">Planning</text>
+<text class="tx tx-muted" x="200.0" y="111.0" text-anchor="middle" style="font-size:11px">model chooses the steps</text>
+<rect class="bx bx-model" x="280" y="68" width="140" height="60" rx="10"/>
+<text class="tx tx-model" x="350.0" y="95.0" text-anchor="middle" style="font-size:13px;font-weight:600">Multi-agent</text>
+<text class="tx tx-muted" x="350.0" y="111.0" text-anchor="middle" style="font-size:11px">specialists collaborate</text>
+<rect class="fr fr-tool" x="420" y="170" width="300" height="100" rx="14"/>
+<text class="tx tx-tool caps" x="432" y="188" text-anchor="start" style="font-size:11px;font-weight:600">mature, reliable: start here</text>
+<rect class="fr fr-risk" x="110" y="30" width="320" height="110" rx="14"/>
+<text class="tx tx-risk caps" x="122" y="48" text-anchor="start" style="font-size:11px;font-weight:600">powerful, less predictable</text>
+<text class="tx tx-muted" x="390" y="160" text-anchor="middle" style="font-size:11px">the four patterns combine: a planner that calls tools and reflects, staffed by several agents</text>
+</svg></div><figcaption>Course Module 1, 'Agentic design patterns', with Ng's stated view from The Batch that reflection and tool use are 'more reliable' than planning and multi-agent collaboration. Sections 5, 6, 10, and 11 take one pattern each.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Keep this slide up as the map for the rest of the module. The colour code carries over: violet patterns change how the model thinks, the green one connects it to the world. Ask which pattern each of the learner's use cases from section 1 would need first.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Most production wins in 2026 are reflection plus tools inside a fixed workflow. That is a low-risk, high-return investment.</li><li>Planning and multi-agent designs need heavier evaluation and monitoring. Budget them as research until evals say otherwise.</li><li>The patterns are vocabulary for reviewing a proposal: which of the four does this design use, and why?</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Ng's one-line definitions: <strong>Reflection</strong>, the LLM examines its own work to find ways to improve it. <strong>Tool use</strong>, the LLM is given tools such as web search, code execution, or any other function to gather information, take action, or process data. <strong>Planning</strong>, the LLM comes up with and executes a multi-step plan to achieve a goal. <strong>Multi-agent collaboration</strong>, more than one AI agent work together, splitting up tasks and discussing and debating ideas. The course builds each from first principles in Python before introducing frameworks, so the learner understands what the framework is hiding.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>design pattern</strong> is a named, reusable way to structure a solution to a recurring problem. A <strong>framework</strong> is a library that implements patterns so you do not write the plumbing yourself. <strong>First principles</strong> means building the simplest version by hand to understand it.</p></div></details>
+</div></section>
+<section class="lesson" id="reflection">
+<div class="lesson-head"><span class="num">05</span><h2>Reflection is automated code review: the model critiques its own draft, then revises</h2></div>
+<p class="thesis">Ask the model for a draft, then ask it to check that draft against explicit criteria, then ask it to rewrite. Two or three rounds usually beat one careful prompt. It works best when something outside the model, like a test or a database, supplies the feedback.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Reflection loop: generate a draft, critique it against explicit criteria, revise, repeat; an external feedback lane runs the output through tests or a database and feeds results back" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="20" y="70" width="120" height="56" rx="10"/>
+<text class="tx tx-human" x="80.0" y="95.0" text-anchor="middle" style="font-size:13px;font-weight:600">Task</text>
+<text class="tx tx-muted" x="80.0" y="111.0" text-anchor="middle" style="font-size:11px">&#x27;chart Q3 sales&#x27;</text>
+<rect class="bx bx-model" x="170" y="70" width="130" height="56" rx="10"/>
+<text class="tx tx-model" x="235.0" y="95.0" text-anchor="middle" style="font-size:13px;font-weight:600">Generate</text>
+<text class="tx tx-muted" x="235.0" y="111.0" text-anchor="middle" style="font-size:11px">first draft</text>
+<rect class="bx bx-model" x="330" y="70" width="150" height="56" rx="10"/>
+<text class="tx tx-model" x="405.0" y="95.0" text-anchor="middle" style="font-size:13px;font-weight:600">Critique</text>
+<text class="tx tx-muted" x="405.0" y="111.0" text-anchor="middle" style="font-size:11px">against named criteria</text>
+<rect class="bx bx-model" x="510" y="70" width="120" height="56" rx="10"/>
+<text class="tx tx-model" x="570.0" y="95.0" text-anchor="middle" style="font-size:13px;font-weight:600">Revise</text>
+<text class="tx tx-muted" x="570.0" y="111.0" text-anchor="middle" style="font-size:11px">second draft</text>
+<rect class="bx bx-tool" x="660" y="70" width="90" height="56" rx="10"/>
+<text class="tx tx-tool" x="705.0" y="102.32" text-anchor="middle" style="font-size:12px;font-weight:600">Output</text>
+<line class="ln ln-neutral" x1="140" y1="98" x2="160.0" y2="98.0"/>
+<polygon class="ah ah-neutral" points="168.0,98.0 159.0,102.5 159.0,93.5"/>
+<line class="ln ln-neutral" x1="300" y1="98" x2="320.0" y2="98.0"/>
+<polygon class="ah ah-neutral" points="328.0,98.0 319.0,102.5 319.0,93.5"/>
+<line class="ln ln-neutral" x1="480" y1="98" x2="500.0" y2="98.0"/>
+<polygon class="ah ah-neutral" points="508.0,98.0 499.0,102.5 499.0,93.5"/>
+<line class="ln ln-neutral" x1="630" y1="98" x2="650.0" y2="98.0"/>
+<polygon class="ah ah-neutral" points="658.0,98.0 649.0,102.5 649.0,93.5"/>
+<polyline class="ln ln-model dashed" points="570,126 570,160 235,160 235.0,136.0" fill="none"/>
+<polygon class="ah ah-model" points="235.0,128.0 239.5,137.0 230.5,137.0"/>
+<text class="tx tx-muted halo" x="402" y="152" text-anchor="middle" style="font-size:11px">repeat until the critique finds nothing new (2 to 3 rounds)</text>
+<rect class="fr fr-tool" x="160" y="200" width="500" height="84" rx="14"/>
+<text class="tx tx-tool caps" x="172" y="218" text-anchor="start" style="font-size:11px;font-weight:600">External feedback: stronger than self-critique alone</text>
+<rect class="bx bx-tool" x="180" y="228" width="140" height="44" rx="10"/>
+<text class="tx tx-tool" x="250.0" y="247.0" text-anchor="middle" style="font-size:12px;font-weight:600">Run the code / SQL</text>
+<text class="tx tx-muted" x="250.0" y="263.0" text-anchor="middle" style="font-size:11px">does it execute?</text>
+<rect class="bx bx-tool" x="340" y="228" width="140" height="44" rx="10"/>
+<text class="tx tx-tool" x="410.0" y="247.0" text-anchor="middle" style="font-size:12px;font-weight:600">Unit tests</text>
+<text class="tx tx-muted" x="410.0" y="263.0" text-anchor="middle" style="font-size:11px">did it pass?</text>
+<rect class="bx bx-tool" x="500" y="228" width="140" height="44" rx="10"/>
+<text class="tx tx-tool" x="570.0" y="247.0" text-anchor="middle" style="font-size:12px;font-weight:600">Render the chart</text>
+<text class="tx tx-muted" x="570.0" y="263.0" text-anchor="middle" style="font-size:11px">does it look right?</text>
+<line class="ln ln-tool" x1="405" y1="200" x2="405.0" y2="136.0"/>
+<polygon class="ah ah-tool" points="405.0,128.0 409.5,137.0 400.5,137.0"/>
+<text class="tx tx-muted halo" x="405.0" y="194.0" text-anchor="middle" style="font-size:11px">feed errors back into the critique</text>
+<text class="tx tx-muted" x="380" y="296" text-anchor="middle" style="font-size:11px">vague prompts (&#x27;improve this&#x27;) do little; name the criteria: correctness, labels, tone, missing steps</text>
+</svg></div><figcaption>Course Module 2, 'Reflection design pattern', including the chart-generation and SQL-generation labs. The top loop is self-critique; the bottom lane is 'Using external feedback', which the course shows to be the stronger version.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Demonstrate live if you can: ask a model for a chart title and axis labels, then ask it to critique its own output against a checklist, then revise. Point out that 'improve this' produces little; 'check for X, Y, Z' produces real fixes.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Reflection is the cheapest quality upgrade available: no new data, no new model, one extra prompt in the loop.</li><li>The quality of the critique prompt is a product decision. It encodes what 'good' means for your users.</li><li>External feedback turns reflection from opinion into fact. Wherever your output can be executed, rendered, or checked, wire that check in.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Ng's canonical flow for code: generate code for task X; prompt 'check the code carefully for correctness, style, and efficiency and give constructive criticism'; feed the critique back and ask for a rewrite; repeat. The Module 2 lesson 'Why not just direct generation?' shows the quality gap, and 'Evaluating the impact of reflection' measures it rather than assuming it. External feedback examples from the course: execute generated SQL against the database and return errors or empty results; run unit tests; render a chart and have the model inspect the image. Reflection can be one model talking to itself or two roles (author and reviewer), which is the bridge to multi-agent designs.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>unit test</strong> runs a piece of code with known inputs and checks the outputs. <strong>SQL</strong> is the query language for databases; generating it from English is a common agent task. A <strong>rubric</strong> is a checklist of named criteria used to judge quality.</p></div></details>
+</div></section>
+<section class="lesson" id="tools">
+<div class="lesson-head"><span class="num">06</span><h2>Tool use is how text becomes action: the model asks, your software does</h2></div>
+<p class="thesis">The model never touches your database. It reads a description of each tool, decides one is needed, and emits a structured request; ordinary code executes it and hands back the result. MCP standardises that plug, and code execution turns any library into a tool.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 330" role="img" aria-label="Tool use mechanics: the model reads tool descriptions, emits a structured function call, software executes it, and the result returns to the model; MCP standardises the connection; code execution acts as a universal tool" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-data" x="20" y="40" width="200" height="70" rx="10"/>
+<text class="tx tx-data" x="120.0" y="72.0" text-anchor="middle" style="font-size:13px;font-weight:600">Tool descriptions</text>
+<text class="tx tx-muted" x="120.0" y="88.0" text-anchor="middle" style="font-size:11px">name, what it does, arguments</text>
+<text class="tx tx-muted" x="120" y="128" text-anchor="middle" style="font-size:10px">&#x27;search_web(query)&#x27;, &#x27;get_orders(customer_id)&#x27;</text>
+<rect class="bx bx-model" x="280" y="40" width="160" height="70" rx="10"/>
+<text class="tx tx-model" x="360.0" y="72.0" text-anchor="middle" style="font-size:13px;font-weight:600">Model</text>
+<text class="tx tx-muted" x="360.0" y="88.0" text-anchor="middle" style="font-size:11px">decides a tool is needed</text>
+<rect class="bx bx-data" x="500" y="40" width="240" height="70" rx="10"/>
+<text class="tx tx-data" x="620.0" y="72.0" text-anchor="middle" style="font-size:13px;font-weight:600">Function call</text>
+<text class="tx tx-muted" x="620.0" y="88.0" text-anchor="middle" style="font-size:11px">{tool: &quot;get_orders&quot;, id: 4821}</text>
+<line class="ln ln-data" x1="220" y1="75" x2="270.0" y2="75.0"/>
+<polygon class="ah ah-data" points="278.0,75.0 269.0,79.5 269.0,70.5"/>
+<text class="tx tx-muted halo" x="249.0" y="93.0" text-anchor="middle" style="font-size:11px">in the prompt</text>
+<line class="ln ln-model" x1="440" y1="75" x2="490.0" y2="75.0"/>
+<polygon class="ah ah-model" points="498.0,75.0 489.0,79.5 489.0,70.5"/>
+<text class="tx tx-muted halo" x="469.0" y="67.0" text-anchor="middle" style="font-size:11px">emits</text>
+<rect class="bx bx-tool" x="500" y="150" width="240" height="60" rx="10"/>
+<text class="tx tx-tool" x="620.0" y="177.0" text-anchor="middle" style="font-size:13px;font-weight:600">Your software runs it</text>
+<text class="tx tx-muted" x="620.0" y="193.0" text-anchor="middle" style="font-size:11px">database, API, email, calendar</text>
+<line class="ln ln-tool" x1="620" y1="110" x2="620.0" y2="140.0"/>
+<polygon class="ah ah-tool" points="620.0,148.0 615.5,139.0 624.5,139.0"/>
+<polyline class="ln ln-tool" points="500,180 360,180 360.0,120.0" fill="none"/>
+<polygon class="ah ah-tool" points="360.0,112.0 364.5,121.0 355.5,121.0"/>
+<text class="tx tx-muted halo" x="430" y="194" text-anchor="middle" style="font-size:11px">result goes back into the context</text>
+<rect class="bx bx-tool" x="20" y="170" width="200" height="60" rx="10"/>
+<text class="tx tx-tool" x="120.0" y="197.0" text-anchor="middle" style="font-size:13px;font-weight:600">MCP</text>
+<text class="tx tx-muted" x="120.0" y="213.0" text-anchor="middle" style="font-size:11px">one standard plug for tools</text>
+<text class="tx tx-muted" x="120" y="246" text-anchor="middle" style="font-size:10px">describe a tool once; any MCP-aware agent can call it</text>
+<rect class="bx bx-tool" x="20" y="262" width="200" height="56" rx="10"/>
+<text class="tx tx-tool" x="120.0" y="287.0" text-anchor="middle" style="font-size:13px;font-weight:600">Code execution</text>
+<text class="tx tx-muted" x="120.0" y="303.0" text-anchor="middle" style="font-size:11px">the universal tool</text>
+<text class="tx" x="120" y="330" text-anchor="middle" style="font-size:1px"></text>
+<text class="tx tx-muted" x="330" y="250" text-anchor="start" style="font-size:11px">Code execution: instead of building a tool for every edge case, let the model</text>
+<text class="tx tx-muted" x="330" y="266" text-anchor="start" style="font-size:11px">write a few lines that call a library (pandas, a date library) and run them</text>
+<text class="tx tx-risk" x="330" y="290" text-anchor="start" style="font-size:11px">Risk: anything the model can call, it can call wrongly. Read-only tools first,</text>
+<text class="tx tx-risk" x="330" y="306" text-anchor="start" style="font-size:11px">write tools behind approval, sandbox the code runner.</text>
+</svg></div><figcaption>Course Module 3, 'Tool use': 'What are tools?', 'Creating a tool', 'Tool syntax', 'Code execution', and 'MCP'. The email-assistant lab is the course's worked example of a model reading, drafting, and sending through tools.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Walk one call end to end with a customer-service example: the model sees a get_orders tool, emits a call with the customer id, the system runs it, the model reads the orders and replies. Then ask: which tools in their business are read-only, and which ones change the world?</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Every tool is a permission decision. Inventory what the agent can read, what it can write, and what a person must approve.</li><li>MCP is worth a standard: tools described once become reusable across agents and vendors, which reduces lock-in.</li><li>Code execution replaces a backlog of custom integrations, but it needs a sandbox. Treat it like giving a contractor a terminal.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Mechanics from the course and Ng's Batch letter: tool descriptions (name, purpose, argument schema) are placed in the model's context; the model outputs a formatted call such as <code>{tool: web-search, query: ...}</code>; post-processing detects it, runs the function, and appends the result for the next model turn. With hundreds of tools, a retrieval step selects the relevant subset, the same idea as RAG. <strong>Code execution</strong> lets the model write Python that calls thousands of library functions, which the course recommends over hand-building a tool per edge case. <strong>MCP</strong> (Model Context Protocol) defines how tools are described and invoked so one server works with many agents; ByteByteGo's summary is that MCP handles tool access while agent-to-agent protocols handle agent communication.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>function</strong> is a named piece of code with inputs and an output. An <strong>API</strong> lets one program call another. A <strong>sandbox</strong> is an isolated environment where generated code can run without reaching production systems. <strong>JSON</strong> is the structured text format tool calls are written in.</p></div></details>
+</div></section>
+<section class="lesson" id="evals">
+<div class="lesson-head"><span class="num">07</span><h2>Evals come in four kinds, and a small set of twenty examples beats none</h2></div>
+<p class="thesis">Score objectively when there is a right answer and subjectively with a model judging against yes/no criteria when there is not. Score the whole workflow to know if it works and individual components to know why. Twenty to fifty examples are enough to start.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 320" role="img" aria-label="Two-by-two evaluation matrix: objective versus subjective scoring, crossed with end-to-end versus component-level scope" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-tool caps" x="240" y="30" text-anchor="middle" style="font-size:12px;font-weight:600">objective</text>
+<text class="tx tx-model caps" x="560" y="30" text-anchor="middle" style="font-size:12px;font-weight:600">subjective</text>
+<text class="tx tx-muted caps" x="60" y="110" text-anchor="start" style="font-size:11px;font-weight:600">end-to-end</text>
+<text class="tx tx-muted caps" x="60" y="230" text-anchor="start" style="font-size:11px;font-weight:600">component</text>
+<rect class="bx bx-tool" x="150" y="50" width="260" height="110" rx="10"/>
+<text class="tx tx-tool" x="280.0" y="109.68" text-anchor="middle" style="font-size:13px;font-weight:600"></text>
+<text class="tx" x="280" y="78" text-anchor="middle" style="font-size:12px;font-weight:600">code checks ground truth</text>
+<text class="tx tx-muted" x="165" y="100" text-anchor="start" style="font-size:11px">did the final answer match?</text>
+<text class="tx tx-muted" x="165" y="115" text-anchor="start" style="font-size:11px">did the SQL return the right rows?</text>
+<text class="tx tx-muted" x="165" y="130" text-anchor="start" style="font-size:11px">did the tests pass?</text>
+<rect class="bx bx-model" x="430" y="50" width="260" height="110" rx="10"/>
+<text class="tx tx-model" x="560.0" y="109.68" text-anchor="middle" style="font-size:13px;font-weight:600"></text>
+<text class="tx" x="560" y="78" text-anchor="middle" style="font-size:12px;font-weight:600">LLM judge with a binary rubric</text>
+<text class="tx tx-muted" x="445" y="100" text-anchor="start" style="font-size:11px">has a clear title: yes/no</text>
+<text class="tx tx-muted" x="445" y="115" text-anchor="start" style="font-size:11px">cites a source: yes/no</text>
+<text class="tx tx-muted" x="445" y="130" text-anchor="start" style="font-size:11px">tone matches brand: yes/no</text>
+<rect class="bx bx-tool" x="150" y="180" width="260" height="110" rx="10"/>
+<text class="tx tx-tool" x="280.0" y="239.68" text-anchor="middle" style="font-size:13px;font-weight:600"></text>
+<text class="tx" x="280" y="208" text-anchor="middle" style="font-size:12px;font-weight:600">check one step in isolation</text>
+<text class="tx tx-muted" x="165" y="230" text-anchor="start" style="font-size:11px">did the query planner produce</text>
+<text class="tx tx-muted" x="165" y="245" text-anchor="start" style="font-size:11px">3 to 5 relevant searches?</text>
+<text class="tx tx-muted" x="165" y="260" text-anchor="start" style="font-size:11px">cheap, fast, pinpoints the fault</text>
+<rect class="bx bx-model" x="430" y="180" width="260" height="110" rx="10"/>
+<text class="tx tx-model" x="560.0" y="239.68" text-anchor="middle" style="font-size:13px;font-weight:600"></text>
+<text class="tx" x="560" y="208" text-anchor="middle" style="font-size:12px;font-weight:600">judge one step&#x27;s output</text>
+<text class="tx tx-muted" x="445" y="230" text-anchor="start" style="font-size:11px">is this outline complete?</text>
+<text class="tx tx-muted" x="445" y="245" text-anchor="start" style="font-size:11px">is this critique specific?</text>
+<text class="tx tx-muted" x="445" y="260" text-anchor="start" style="font-size:11px">run on 20 to 50 examples</text>
+<text class="tx tx-muted" x="400" y="310" text-anchor="middle" style="font-size:11px">start with a mini-eval of 20 to 50 examples; define success criteria before building</text>
+</svg></div><figcaption>Course Module 1, 'Evaluating agentic AI', and Module 4, 'Evaluations' and 'Component-level evaluations'. The lab adds a component-level eval to the research workflow from section 3. Binary rubric items beat fuzzy 1-to-10 scores because they are reproducible.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Connect back to Module 1's eval loop: this is the same idea with the course's taxonomy. Have the learner write three binary rubric lines for a feature they own. Emphasise the course's rule of thumb: define success criteria first, build a mini-eval, then choose the eval type.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>An eval set is the product spec for an agentic feature. If you cannot write twenty examples with a pass criterion, the feature is not defined yet.</li><li>Component-level evals are what make agentic systems manageable: they turn 'it's flaky' into 'step three fails 30% of the time'.</li><li>LLM-as-judge is legitimate and cheap when the rubric is binary and spot-checked by people. Fuzzy scores are neither.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Course guidance in order: (1) define what success looks like, (2) build a mini-eval of 20 to 50 examples for fast signal, (3) pick objective checks (code compares to ground truth) where an answer is verifiable and subjective checks (an LLM judge with a structured rubric of discrete yes/no criteria such as 'has a clear title', 'correct axis labels') where it is not. End-to-end evals are expensive and tell you whether the system works; component-level evals isolate the underperforming step and direct effort precisely. Keep eval data separate from any examples used in prompts. Rerun the suite on every prompt, model, or tool change.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Ground truth</strong> is the known correct answer for an example. An <strong>LLM judge</strong> is a model prompted to grade another model's output. <strong>Binary</strong> scoring means each criterion is either met or not, no partial credit.</p></div></details>
+</div></section>
+<section class="lesson" id="error-analysis">
+<div class="lesson-head"><span class="num">08</span><h2>Error analysis tells you which step to fix; without it, agent debugging is guesswork</h2></div>
+<p class="thesis">Read a batch of traces, mark where each failed run first went wrong, and count by component. The tally tells you where to spend the next week. For the weak step there are four moves, in cost order: refine the prompt, switch the model, split the step, fine-tune.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 330" role="img" aria-label="Error analysis: a trace of one run across five components with a failure tally per component, then four ways to fix the weakest LLM step" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-model" x="20" y="60" width="130" height="50" rx="10"/>
+<text class="tx tx-model" x="85.0" y="89.32" text-anchor="middle" style="font-size:12px;font-weight:600">Plan queries</text>
+<rect class="bar" x="20" y="128" width="20" height="16" rx="3" style="fill:var(--neutral)"/>
+<text class="tx tx-muted" x="85" y="164" text-anchor="middle" style="font-size:10px">2 of 20 runs wrong here</text>
+<line class="ln ln-neutral" x1="150" y1="85" x2="160.0" y2="85.0"/>
+<polygon class="ah ah-neutral" points="168.0,85.0 159.0,89.5 159.0,80.5"/>
+<rect class="bx bx-tool" x="168" y="60" width="130" height="50" rx="10"/>
+<text class="tx tx-tool" x="233.0" y="89.32" text-anchor="middle" style="font-size:12px;font-weight:600">Search + fetch</text>
+<rect class="bar" x="168" y="128" width="10" height="16" rx="3" style="fill:var(--neutral)"/>
+<text class="tx tx-muted" x="233" y="164" text-anchor="middle" style="font-size:10px">1 of 20 runs wrong here</text>
+<line class="ln ln-neutral" x1="298" y1="85" x2="308.0" y2="85.0"/>
+<polygon class="ah ah-neutral" points="316.0,85.0 307.0,89.5 307.0,80.5"/>
+<rect class="bx bx-model" x="316" y="60" width="130" height="50" rx="10"/>
+<text class="tx tx-model" x="381.0" y="89.32" text-anchor="middle" style="font-size:12px;font-weight:600">Synthesise</text>
+<rect class="bar" x="316" y="128" width="90" height="16" rx="3" style="fill:var(--risk)"/>
+<text class="tx tx-risk" x="381" y="164" text-anchor="middle" style="font-size:10px">9 of 20 runs wrong here</text>
+<line class="ln ln-neutral" x1="446" y1="85" x2="456.0" y2="85.0"/>
+<polygon class="ah ah-neutral" points="464.0,85.0 455.0,89.5 455.0,80.5"/>
+<rect class="bx bx-model" x="464" y="60" width="130" height="50" rx="10"/>
+<text class="tx tx-model" x="529.0" y="89.32" text-anchor="middle" style="font-size:12px;font-weight:600">Write</text>
+<rect class="bar" x="464" y="128" width="30" height="16" rx="3" style="fill:var(--neutral)"/>
+<text class="tx tx-muted" x="529" y="164" text-anchor="middle" style="font-size:10px">3 of 20 runs wrong here</text>
+<line class="ln ln-neutral" x1="594" y1="85" x2="604.0" y2="85.0"/>
+<polygon class="ah ah-neutral" points="612.0,85.0 603.0,89.5 603.0,80.5"/>
+<rect class="bx bx-model" x="612" y="60" width="130" height="50" rx="10"/>
+<text class="tx tx-model" x="677.0" y="89.32" text-anchor="middle" style="font-size:12px;font-weight:600">Reflect</text>
+<rect class="bar" x="612" y="128" width="10" height="16" rx="3" style="fill:var(--neutral)"/>
+<text class="tx tx-muted" x="677" y="164" text-anchor="middle" style="font-size:10px">1 of 20 runs wrong here</text>
+<text class="tx tx-muted" x="20" y="40" text-anchor="start" style="font-size:11px">Read 20 traces; for each run, mark the first component whose output a person would reject</text>
+<text class="tx" x="380" y="192" text-anchor="middle" style="font-size:12px;font-weight:600">fix the step with the most failures first, then re-run the evals</text>
+<text class="tx tx-muted caps" x="120" y="214" text-anchor="start" style="font-size:11px;font-weight:600">Four ways to fix an LLM step</text>
+<rect class="bx bx-model" x="20" y="230" width="170" height="50" rx="10"/>
+<text class="tx tx-model" x="105.0" y="252.0" text-anchor="middle" style="font-size:12px;font-weight:600">Refine the prompt</text>
+<text class="tx tx-muted" x="105.0" y="268.0" text-anchor="middle" style="font-size:11px">cheapest, try first</text>
+<rect class="bx bx-model" x="205" y="230" width="170" height="50" rx="10"/>
+<text class="tx tx-model" x="290.0" y="252.0" text-anchor="middle" style="font-size:12px;font-weight:600">Switch the model</text>
+<text class="tx tx-muted" x="290.0" y="268.0" text-anchor="middle" style="font-size:11px">bigger, or a specialist</text>
+<rect class="bx bx-model" x="390" y="230" width="170" height="50" rx="10"/>
+<text class="tx tx-model" x="475.0" y="252.0" text-anchor="middle" style="font-size:12px;font-weight:600">Split the step</text>
+<text class="tx tx-muted" x="475.0" y="268.0" text-anchor="middle" style="font-size:11px">two smaller steps</text>
+<rect class="bx bx-model" x="575" y="230" width="170" height="50" rx="10"/>
+<text class="tx tx-model" x="660.0" y="252.0" text-anchor="middle" style="font-size:12px;font-weight:600">Fine-tune</text>
+<text class="tx tx-muted" x="660.0" y="268.0" text-anchor="middle" style="font-size:11px">last resort, needs data</text>
+<text class="tx tx-muted" x="380" y="310" text-anchor="middle" style="font-size:11px">the course&#x27;s core discipline: without this, debugging an agent is guesswork</text>
+</svg></div><figcaption>Course Module 4, 'Error analysis and prioritizing next steps', 'More error analysis examples', and 'How to address problems you identify'. Numbers are illustrative; the shape is what matters.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>This is the section leaders most often skip and the one Ng says separates practitioners. Ask the learner how their team decides what to fix today. If the answer is 'whatever the last customer complained about', this is the alternative.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Ask for the failure tally by component in every agent review. It is the single most informative artefact an AI team can show you.</li><li>The four fixes have very different costs. Insist that prompt refinement and step splitting are exhausted before fine-tuning appears on a roadmap.</li><li>Traces must be logged from day one. You cannot analyse errors you did not record.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Method from the course: build the workflow end to end quickly, run it on a small set, and manually inspect each run's trace, comparing each component's output to what a competent person would have produced. Tag the first failing component. Aggregate the tags to find the component that fails most often, then apply component-level evals to that step so improvement can be measured. The four remedies for an LLM component are refining the prompt, switching models, decomposing the step into smaller steps, and fine-tuning. Tool components fail differently (bad inputs, timeouts, missing permissions) and are fixed in code.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>trace</strong> is the log of every call, input, and output in one run. <strong>Tagging</strong> is labelling each failed run with the component responsible. <strong>Fine-tuning</strong> is retraining a model on your own examples (Module 1, section 6).</p></div></details>
+</div></section>
+<section class="lesson" id="build-analyze">
+<div class="lesson-head"><span class="num">09</span><h2>Build fast, analyse honestly, repeat: the development process the course teaches</h2></div>
+<p class="thesis">Do not design the perfect agent up front. Build a rough end-to-end version, look hard at where it fails, fix the biggest problem, and go around again. Optimise for speed of response before cost per token, because users leave slow agents and finance rarely leaves cheap ones.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 270" role="img" aria-label="The build-analyze loop: build an end-to-end version fast, analyse traces and mini-evals, improve the weakest component, repeat; with latency prioritised over token cost" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-tool" x="60" y="60" width="200" height="70" rx="10"/>
+<text class="tx tx-tool" x="160.0" y="92.0" text-anchor="middle" style="font-size:13px;font-weight:600">Build</text>
+<text class="tx tx-muted" x="160.0" y="108.0" text-anchor="middle" style="font-size:11px">end-to-end, quick and rough</text>
+<rect class="bx bx-human" x="500" y="60" width="200" height="70" rx="10"/>
+<text class="tx tx-human" x="600.0" y="92.0" text-anchor="middle" style="font-size:13px;font-weight:600">Analyse</text>
+<text class="tx tx-muted" x="600.0" y="108.0" text-anchor="middle" style="font-size:11px">read traces, run mini-evals</text>
+<line class="ln ln-tool" x1="260" y1="85" x2="490.0" y2="85.0"/>
+<polygon class="ah ah-tool" points="498.0,85.0 489.0,89.5 489.0,80.5"/>
+<text class="tx tx-muted halo" x="379.0" y="75.0" text-anchor="middle" style="font-size:11px">ship a first version in days, not months</text>
+<polyline class="ln ln-model" points="600,130 600,170 160,170 160.0,140.0" fill="none"/>
+<polygon class="ah ah-model" points="160.0,132.0 164.5,141.0 155.5,141.0"/>
+<text class="tx tx-muted halo" x="380" y="162" text-anchor="middle" style="font-size:11px">fix the weakest component, tighten the loop each cycle</text>
+<text class="tx" x="380" y="210" text-anchor="middle" style="font-size:12px;font-weight:600">Optimise latency before cost</text>
+<text class="tx tx-muted" x="380" y="230" text-anchor="middle" style="font-size:11px">slow agents lose users; token cost is usually a smaller number than it feels. Parallelise independent steps first.</text>
+<text class="tx tx-muted" x="380" y="252" text-anchor="middle" style="font-size:11px">then: smaller models for easy steps, caching, fewer reflection rounds where evals say they add nothing</text>
+</svg></div><figcaption>Course Module 4, 'Development process summary' and 'Latency, cost optimization'. The loop is the same shape as the eval loop in Module 1 and the SDD loop in Module 3; the course adds the discipline of analysing traces by hand.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Contrast with a waterfall AI project: six months of architecture, then a demo that fails on real inputs. Ask the learner how quickly their team could have a rough end-to-end agent running on 20 real examples. If the answer is more than two weeks, the scope is too big.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Fund agent projects in short cycles with a working end-to-end version as the first milestone, not a design document.</li><li>Ask for latency numbers per step. Parallelising independent steps is usually the largest, cheapest speed-up.</li><li>Cost optimisation is a later-stage activity. Do it when the bill is material and evals can prove quality did not drop.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>The course's two modes: <strong>build</strong> (create the end-to-end system quickly, accept rough edges) and <strong>analyse</strong> (examine outputs, read traces, run small evals on 10 to 20 samples). The cycle tightens over time as evals grow and components stabilise. On performance: latency typically matters more than cost because it degrades the user experience and bottlenecks the run; parallel execution of independent tasks (the nine-page fetch example) is the first optimisation. Cost levers, in order of quality risk: fewer unnecessary calls, caching, smaller models for easy components, quantised or distilled models (see Module 2, section 11).</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Latency</strong> is how long a user waits for a response. <strong>Throughput</strong> is how many requests a system handles per second. A <strong>milestone</strong> here is a working system, not a document.</p></div></details>
+</div></section>
+<section class="lesson" id="planning">
+<div class="lesson-head"><span class="num">10</span><h2>Planning hands the model the sequence, which is powerful and the hardest to predict</h2></div>
+<p class="thesis">Instead of a developer fixing the steps, the model writes a plan for the goal, executes it with tools, and replans when a step fails. Ng calls it a very powerful capability with less predictable results. The sweet spot is a model plan over a small set of well-tested, hard-coded steps.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 330" role="img" aria-label="Planning pattern: goal to a model-written plan of steps, each executed with tools, with replanning on failure; a second lane shows planning with code execution" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="20" y="60" width="110" height="56" rx="10"/>
+<text class="tx tx-human" x="75.0" y="85.0" text-anchor="middle" style="font-size:13px;font-weight:600">Goal</text>
+<text class="tx tx-muted" x="75.0" y="101.0" text-anchor="middle" style="font-size:11px">&#x27;refund if eligible&#x27;</text>
+<rect class="bx bx-model" x="160" y="60" width="160" height="56" rx="10"/>
+<text class="tx tx-model" x="240.0" y="85.0" text-anchor="middle" style="font-size:13px;font-weight:600">Model writes a plan</text>
+<text class="tx tx-muted" x="240.0" y="101.0" text-anchor="middle" style="font-size:11px">steps it will take</text>
+<rect class="bx bx-tool" x="350" y="60" width="130" height="56" rx="10"/>
+<text class="tx tx-tool" x="415.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Step 1: look up</text>
+<text class="tx tx-muted" x="415.0" y="101.0" text-anchor="middle" style="font-size:11px">order + policy</text>
+<rect class="bx bx-model" x="500" y="60" width="130" height="56" rx="10"/>
+<text class="tx tx-model" x="565.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Step 2: decide</text>
+<text class="tx tx-muted" x="565.0" y="101.0" text-anchor="middle" style="font-size:11px">eligible?</text>
+<rect class="bx bx-tool" x="650" y="60" width="100" height="56" rx="10"/>
+<text class="tx tx-tool" x="700.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Step 3: act</text>
+<text class="tx tx-muted" x="700.0" y="101.0" text-anchor="middle" style="font-size:11px">issue refund</text>
+<line class="ln ln-neutral" x1="130" y1="88" x2="150.0" y2="88.0"/>
+<polygon class="ah ah-neutral" points="158.0,88.0 149.0,92.5 149.0,83.5"/>
+<line class="ln ln-neutral" x1="320" y1="88" x2="340.0" y2="88.0"/>
+<polygon class="ah ah-neutral" points="348.0,88.0 339.0,92.5 339.0,83.5"/>
+<line class="ln ln-neutral" x1="480" y1="88" x2="490.0" y2="88.0"/>
+<polygon class="ah ah-neutral" points="498.0,88.0 489.0,92.5 489.0,83.5"/>
+<line class="ln ln-neutral" x1="630" y1="88" x2="640.0" y2="88.0"/>
+<polygon class="ah ah-neutral" points="648.0,88.0 639.0,92.5 639.0,83.5"/>
+<polyline class="ln ln-risk dashed" points="565,116 565,150 240,150 240.0,126.0" fill="none"/>
+<polygon class="ah ah-risk" points="240.0,118.0 244.5,127.0 235.5,127.0"/>
+<text class="tx tx-muted halo" x="402" y="142" text-anchor="middle" style="font-size:11px">a step fails or returns something unexpected → replan</text>
+<rect class="fr fr-tool" x="10" y="180" width="740" height="130" rx="14"/>
+<text class="tx tx-tool caps" x="22" y="198" text-anchor="start" style="font-size:11px;font-weight:600">Planning with code execution</text>
+<rect class="bx bx-human" x="30" y="220" width="150" height="56" rx="10"/>
+<text class="tx tx-human" x="105.0" y="245.0" text-anchor="middle" style="font-size:12px;font-weight:600">Goal</text>
+<text class="tx tx-muted" x="105.0" y="261.0" text-anchor="middle" style="font-size:11px">&#x27;top 5 products by margin&#x27;</text>
+<rect class="bx bx-model" x="210" y="220" width="200" height="56" rx="10"/>
+<text class="tx tx-model" x="310.0" y="245.0" text-anchor="middle" style="font-size:12px;font-weight:600">Model writes code</text>
+<text class="tx tx-muted" x="310.0" y="261.0" text-anchor="middle" style="font-size:11px">pandas over the sales table</text>
+<rect class="bx bx-tool" x="440" y="220" width="130" height="56" rx="10"/>
+<text class="tx tx-tool" x="505.0" y="245.0" text-anchor="middle" style="font-size:12px;font-weight:600">Run it</text>
+<text class="tx tx-muted" x="505.0" y="261.0" text-anchor="middle" style="font-size:11px">sandboxed</text>
+<rect class="bx bx-data" x="600" y="220" width="130" height="56" rx="10"/>
+<text class="tx tx-data" x="665.0" y="245.0" text-anchor="middle" style="font-size:12px;font-weight:600">Answer</text>
+<text class="tx tx-muted" x="665.0" y="261.0" text-anchor="middle" style="font-size:11px">or fix and rerun</text>
+<line class="ln ln-neutral" x1="180" y1="248" x2="200.0" y2="248.0"/>
+<polygon class="ah ah-neutral" points="208.0,248.0 199.0,252.5 199.0,243.5"/>
+<line class="ln ln-neutral" x1="410" y1="248" x2="430.0" y2="248.0"/>
+<polygon class="ah ah-neutral" points="438.0,248.0 429.0,252.5 429.0,243.5"/>
+<line class="ln ln-neutral" x1="570" y1="248" x2="590.0" y2="248.0"/>
+<polygon class="ah ah-neutral" points="598.0,248.0 589.0,252.5 589.0,243.5"/>
+<text class="tx tx-muted" x="380" y="300" text-anchor="middle" style="font-size:10.5px">libraries already handle the edge cases; the model composes them instead of you building a tool per case</text>
+</svg></div><figcaption>Course Module 5, 'Planning workflows', 'Creating and executing LLM plans', and 'Planning with code execution', with the customer-service agent lab as the worked example. The bottom lane is planning where the 'tools' are library functions the model calls from code it writes.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Tell Ng's demo story: a research agent's web-search tool failed mid-demo, and the agent switched to a Wikipedia tool he had forgotten he provided, and finished the task. That is the upside. Then ask what the downside would have been if the fallback tool were 'send email'.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Planning is the notch on the dial where review requirements change. Any planning agent with write tools needs approval gates and full tracing.</li><li>Keep the plan's building blocks small and tested. The model chooses among steps you have already evaluated, so error analysis still works.</li><li>Planning with code execution is the pragmatic version: the model composes existing libraries instead of your team building endless tools.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>In the course's framing, planning is the LLM autonomously deciding the sequence of steps for a larger task, adapting when things do not go as expected. It is less mature than reflection and tool use and produces less predictable behaviour, so use it where the decomposition cannot be specified in advance. The course suggests combining LLM planning with hard-coded discrete steps so component-level error analysis remains possible. Planning with code execution: the model writes a short program that calls library functions (pandas for data, date libraries for calendars), which handles edge cases the team never enumerated; the program runs in a sandbox and errors are fed back for a rewrite (reflection again).</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Replanning</strong> is generating a new plan after a step fails. A <strong>library</strong> is a collection of ready-made functions (pandas is the standard one for tables in Python). An <strong>approval gate</strong> is a point where a person must confirm before the agent proceeds.</p></div></details>
+</div></section>
+<section class="lesson" id="multi-agent">
+<div class="lesson-head"><span class="num">11</span><h2>Multi-agent systems are an org chart for prompts, and they inherit org-chart problems</h2></div>
+<p class="thesis">Give each agent one role and a focused prompt, then let a manager agent delegate, the same way you would staff a project. Focused agents perform better than one agent doing everything. Free-form group discussion between agents is the least predictable pattern, so start with pipelines and hierarchies.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 330" role="img" aria-label="Multi-agent workflow: a manager agent delegates to specialist agents exposed as tools, and three communication patterns: sequential pipeline, hierarchical manager, and group discussion" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-model" x="300" y="30" width="160" height="60" rx="10"/>
+<text class="tx tx-model" x="380.0" y="57.0" text-anchor="middle" style="font-size:13px;font-weight:600">Manager agent</text>
+<text class="tx tx-muted" x="380.0" y="73.0" text-anchor="middle" style="font-size:11px">plans, delegates, assembles</text>
+<rect class="bx bx-model" x="60" y="150" width="150" height="56" rx="10"/>
+<text class="tx tx-model" x="135.0" y="175.0" text-anchor="middle" style="font-size:12px;font-weight:600">Researcher</text>
+<text class="tx tx-muted" x="135.0" y="191.0" text-anchor="middle" style="font-size:11px">gathers evidence</text>
+<rect class="bx bx-model" x="240" y="150" width="150" height="56" rx="10"/>
+<text class="tx tx-model" x="315.0" y="175.0" text-anchor="middle" style="font-size:12px;font-weight:600">Analyst</text>
+<text class="tx tx-muted" x="315.0" y="191.0" text-anchor="middle" style="font-size:11px">finds the pattern</text>
+<rect class="bx bx-model" x="420" y="150" width="150" height="56" rx="10"/>
+<text class="tx tx-model" x="495.0" y="175.0" text-anchor="middle" style="font-size:12px;font-weight:600">Writer</text>
+<text class="tx tx-muted" x="495.0" y="191.0" text-anchor="middle" style="font-size:11px">drafts the report</text>
+<rect class="bx bx-model" x="600" y="150" width="140" height="56" rx="10"/>
+<text class="tx tx-model" x="670.0" y="175.0" text-anchor="middle" style="font-size:12px;font-weight:600">Reviewer</text>
+<text class="tx tx-muted" x="670.0" y="191.0" text-anchor="middle" style="font-size:11px">critiques, signs off</text>
+<line class="ln ln-model" x1="380" y1="90" x2="142.8" y2="146.2"/>
+<polygon class="ah ah-model" points="135.0,148.0 142.7,141.5 144.8,150.3"/>
+<line class="ln ln-model" x1="380" y1="90" x2="321.0" y2="142.7"/>
+<polygon class="ah ah-model" points="315.0,148.0 318.7,138.7 324.7,145.4"/>
+<line class="ln ln-model" x1="380" y1="90" x2="487.9" y2="144.4"/>
+<polygon class="ah ah-model" points="495.0,148.0 484.9,148.0 489.0,139.9"/>
+<line class="ln ln-model" x1="380" y1="90" x2="662.2" y2="146.4"/>
+<polygon class="ah ah-model" points="670.0,148.0 660.3,150.6 662.1,141.8"/>
+<text class="tx tx-muted" x="380" y="226" text-anchor="middle" style="font-size:10.5px">each specialist is a tool the manager can call</text>
+<text class="tx tx-muted caps" x="20" y="240" text-anchor="start" style="font-size:11px;font-weight:600">Communication patterns</text>
+<rect class="bx bx-tool" x="20" y="256" width="220" height="60" rx="10"/>
+<text class="tx tx-tool" x="130.0" y="283.0" text-anchor="middle" style="font-size:12px;font-weight:600">Sequential pipeline</text>
+<text class="tx tx-muted" x="130.0" y="299.0" text-anchor="middle" style="font-size:11px">A → B → C, most predictable</text>
+<rect class="bx bx-tool" x="270" y="256" width="220" height="60" rx="10"/>
+<text class="tx tx-tool" x="380.0" y="283.0" text-anchor="middle" style="font-size:12px;font-weight:600">Hierarchical</text>
+<text class="tx tx-muted" x="380.0" y="299.0" text-anchor="middle" style="font-size:11px">manager delegates, as above</text>
+<rect class="bx bx-risk dashed" x="520" y="256" width="220" height="60" rx="10"/>
+<text class="tx tx-risk" x="630.0" y="283.0" text-anchor="middle" style="font-size:12px;font-weight:600">Group discussion</text>
+<text class="tx tx-muted" x="630.0" y="299.0" text-anchor="middle" style="font-size:11px">agents debate freely, least predictable</text>
+</svg></div><figcaption>Course Module 5, 'Multi-agentic workflows' and 'Communication patterns for multi-agent systems', with the market-research team lab. Ng's caution from The Batch: output quality is 'hard to predict, especially when allowing agents to interact freely'.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>The org-chart analogy lands with leaders: ask how they would staff a market-research project, then map each role to an agent with its own prompt and tools. Then ask which handoffs they would want to inspect. Those are the eval points.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Multi-agent designs are a way to manage complexity, not a way to add intelligence. Each agent is still a prompt plus tools plus evals.</li><li>Prefer pipelines and hierarchies. They keep traces readable and error analysis possible; free discussion does not.</li><li>Frameworks (AutoGen, CrewAI, LangGraph) are fine, but the course builds the pattern by hand first so the team knows what the framework hides.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Ng's three reasons to split work across agents: ablation studies (for example in the AutoGen paper) show multiple agents outperform one; an LLM prompted to focus on one thing at a time performs better; and roles are a useful abstraction for decomposing a problem, like a manager organising a team. His software example staffs a software engineer, a product manager, a designer, and a QA engineer, each with its own system prompt. In the course, specialists are exposed as callable tools so the manager can plan across them, producing non-linear execution. Communication patterns range from sequential handoffs to hierarchical delegation to group chat; the further toward free interaction, the more evaluation and tracing you need. Protocols: MCP for tools, A2A and similar for agent-to-agent messages.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>role prompt</strong> tells the model who it is and what it is responsible for. An <strong>orchestrator</strong> or manager is the component that decides which agent runs next. A <strong>handoff</strong> is one agent's output becoming another's input.</p></div></details>
+</div></section>
+<section class="endsec" id="glossary"><h2>Glossary</h2><div class="gloss"><div><b>Agentic workflow</b>A process where an LLM completes some or all steps of a task, often iteratively, with tools.</div><div><b>Degree of autonomy</b>How much the model decides: from fixed steps, to choosing tools, to planning its own workflow.</div><div><b>Task decomposition</b>Breaking a job into the steps a competent person would take.</div><div><b>Reflection</b>The model critiques its own output against criteria and revises.</div><div><b>External feedback</b>Results from tests, code execution, or a database fed back into reflection.</div><div><b>Tool use</b>The model emits a structured request; software runs the function and returns the result.</div><div><b>Function calling</b>The formatted way a model asks for a tool to be run.</div><div><b>MCP</b>Model Context Protocol, a standard for describing and calling tools.</div><div><b>Code execution</b>The model writes code that runs in a sandbox, turning libraries into tools.</div><div><b>Planning</b>The model writes and executes a multi-step plan, replanning on failure.</div><div><b>Multi-agent collaboration</b>Several role-specific agents split a task, coordinated by a manager or a pipeline.</div><div><b>Eval</b>A scored set of examples; objective (code vs ground truth) or subjective (LLM judge with a rubric).</div><div><b>Component-level eval</b>A check on one step's output in isolation.</div><div><b>Error analysis</b>Reading traces and tallying which component failed first, to prioritise fixes.</div><div><b>Trace</b>The recorded sequence of calls, inputs, and outputs in one run.</div><div><b>Build-analyse loop</b>Build end to end fast, inspect failures, fix the weakest step, repeat.</div></div></section>
+<section class="endsec" id="questions"><h2>Questions to ask your team</h2><ol class="qs"><li>Which notch on the autonomy dial is this workflow at, and what changes if we move it one to the right?</li><li>Show me the decomposition. Which steps would a good employee iterate on, and which look something up?</li><li>Which of the four patterns does this design use, and why not the simpler one?</li><li>What external feedback does reflection get: tests, execution results, or only the model's own opinion?</li><li>List every tool the agent can call. Which ones write, and which of those need approval?</li><li>How many examples are in the eval set, and which are objective versus judged?</li><li>What is the failure tally by component from the last twenty traces?</li><li>What is the end-to-end latency, and which steps could run in parallel?</li><li>For any planning or multi-agent design: what stops it, who approves writes, and can we read the trace?</li></ol></section>
+<section class="endsec" id="reading"><h2>Reading list</h2><p style="color:var(--ink-2);font-size:14.5px">Items marked <b>OneDrive</b> are in Kalyan's Career folder.</p><ul class="reads"><li><b>Agentic AI (Andrew Ng, DeepLearning.AI on Coursera, updated Sept 2026)</b> — <a href="https://www.coursera.org/learn/dlai-agentic-ai">coursera.org/learn/dlai-agentic-ai</a>. The course this module follows: five modules, labs in Python, graded assignments on Coursera.</li><li><b>Same course on the DeepLearning.AI platform</b> — <a href="https://learn.deeplearning.ai/courses/agentic-ai">learn.deeplearning.ai/courses/agentic-ai</a>. All 41 video lessons are free to audit; the labs and quizzes need the Pro plan.</li><li><b>Andrew Ng, 'Agentic workflows' (The Batch, March 2024)</b> — <a href="https://www.deeplearning.ai/the-batch/how-agents-can-improve-llm-performance/">deeplearning.ai</a>. Source of the HumanEval comparison in section 2 and the four-pattern list.</li><li><b>Andrew Ng, Agentic Design Patterns Part 2: Reflection</b> — <a href="https://www.deeplearning.ai/the-batch/agentic-design-patterns-part-2-reflection/">deeplearning.ai</a>. Section 5.</li><li><b>Andrew Ng, Agentic Design Patterns Part 3: Tool Use</b> — <a href="https://www.deeplearning.ai/the-batch/agentic-design-patterns-part-3-tool-use/">deeplearning.ai</a>. Section 6.</li><li><b>Andrew Ng, Agentic Design Patterns Part 4: Planning</b> — <a href="https://www.deeplearning.ai/the-batch/agentic-design-patterns-part-4-planning/">deeplearning.ai</a>. Section 10, including the Wikipedia fallback story.</li><li><b>Andrew Ng, Agentic Design Patterns Part 5: Multi-Agent Collaboration</b> — <a href="https://www.deeplearning.ai/the-batch/agentic-design-patterns-part-5-multi-agent-collaboration/">deeplearning.ai</a>. Section 11.</li><li><b>Inside Andrew Ng's Agentic AI Course: 15 Learnings (10x Playbooks)</b> — <a href="https://10xplaybooks.com/p/inside-andrew-ng-agentic-ai-course">10xplaybooks.com</a>. Learner notes used to confirm the Module 4 material on evals, error analysis, and latency.</li><li><b>Agent Performance Framework (Jyothi Nookula)</b> — OneDrive · AI folder. Effectiveness, efficiency, reliability, trustworthiness: a scorecard that pairs with section 7.</li><li><b>ByteByteGo: MCP vs RAG vs AI Agents (EP202)</b> — <a href="https://blog.bytebytego.com/p/ep202-mcp-vs-rag-vs-ai-agents">blog.bytebytego.com</a>. One-diagram companion to section 6.</li><li><b>ByteByteGo: MCP vs A2A vs ACP</b> — <a href="https://blog.bytebytego.com/p/mcp-vs-a2a-vs-acp-how-ai-agents-actually">blog.bytebytego.com</a>. Protocols for section 11.</li><li><b>Foundational Large Language Models & Text Generation (Google)</b> — OneDrive · AI/Google Gen AI 5 Day Course. The cost and latency trade-offs behind section 9.</li></ul></section>
+</main>
+</div>
+<footer class="footer"><a href="spec-driven-development.html">← Module 3: Spec-Driven Development</a><span></span></footer>
+</div>
+<script>
+(function(){
+  var root=document.documentElement;
+  var notes=document.getElementById('notes-toggle');
+  function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function save(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  if(notes){
+    if(load('vp-notes')==='on'){notes.checked=true;root.setAttribute('data-notes','on')}
+    notes.addEventListener('change',function(){root.setAttribute('data-notes',notes.checked?'on':'off');save('vp-notes',notes.checked?'on':'off')});
+  }
+  var all=document.querySelectorAll('details.disc');
+  var ex=document.getElementById('expand-all');
+  if(ex){ex.addEventListener('click',function(){var open=ex.getAttribute('data-open')!=='1';all.forEach(function(d){d.open=open});ex.setAttribute('data-open',open?'1':'0');ex.textContent=open?'Collapse all':'Expand all'})}
+  var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a});
+  if('IntersectionObserver' in window){
+    var cur=null;
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting){var a=map[e.target.id];if(a&&a!==cur){if(cur)cur.classList.remove('on');a.classList.add('on');cur=a;
+        if(window.innerWidth<=900&&a.scrollIntoView){try{a.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})}catch(x){}}}}});
+    },{rootMargin:'-20% 0px -65% 0px'});
+    Object.keys(map).forEach(function(id){var s=document.getElementById(id);if(s)io.observe(s)});
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="How a model learns from data, how you know whether it is any good, and how it gets from a notebook into a product. This is the ring underneath LLMs, and it still runs most of the AI in production. Sections 04 and 09 carry the diagnostic habits from Andrew Ng&#x27;s Stanford CS229.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📈%3C/text%3E%3C/svg%3E">
+<title>ML Fundamentals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#EBEFF4; --ink:#151A22; --ink-2:#4A5361; --ink-3:#7A8494; --line:#D5DBE4; --line-2:#E6EAF0;
+  --accent:#2A78D6; --accent-ink:#FFFFFF;
+  --data:#2A78D6;  --data-fill:#E2EDFA;
+  --model:#4A3AA7; --model-fill:#E8E5F6;
+  --human:#EB6834; --human-fill:#FBE7DE;
+  --tool:#1B9E6E;  --tool-fill:#DDF3E9;
+  --risk:#E34948;  --risk-fill:#FAE2E2;
+  --neutral:#6B7686; --neutral-fill:#ECEFF3;
+  --shadow:0 1px 2px rgba(21,26,34,.06),0 8px 24px -12px rgba(21,26,34,.18);
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding-block:0 48px;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.02;letter-spacing:-.02em}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:700;line-height:1.15}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.caps{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+
+/* masthead */
+.masthead{padding-block:36px 24px;border-bottom:1px solid var(--line);display:grid;gap:14px}
+.series{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.series .mod{color:var(--accent);font-weight:500}
+.lede{font-size:18px;color:var(--ink-2);max-width:62ch}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:6px}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;user-select:none}
+.switch input{appearance:none;width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(16px)}
+.btn{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink-3)}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink-2);align-items:center}
+.key .caps{margin-right:2px}
+.sw{display:inline-flex;align-items:center;gap:6px}
+.sw i{width:14px;height:14px;border-radius:4px;border:2px solid;display:inline-block}
+.sw-data i{border-color:var(--data);background:var(--data-fill)}
+.sw-model i{border-color:var(--model);background:var(--model-fill)}
+.sw-human i{border-color:var(--human);background:var(--human-fill)}
+.sw-tool i{border-color:var(--tool);background:var(--tool-fill)}
+.sw-risk i{border-color:var(--risk);background:var(--risk-fill)}
+.modlinks{display:flex;gap:8px;flex-wrap:wrap}
+.modlinks a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--ink-2);background:var(--surface)}
+.modlinks a[aria-current]{border-color:var(--accent);color:var(--accent);font-weight:600}
+
+/* layout */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;align-items:start;padding-top:28px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);font-size:14px;display:grid;gap:2px;max-height:calc(100vh - 32px);overflow:auto}
+.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-2);padding:6px 10px;border-radius:8px;border-left:2px solid transparent}
+.toc a .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);min-width:18px}
+.toc a:hover{background:var(--surface)}
+.toc a.on{color:var(--ink);font-weight:600;background:var(--surface);border-left-color:var(--accent)}
+.toc .grp{margin-top:10px}
+main{display:grid;gap:56px;min-width:0}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;gap:20px}
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;max-height:none;padding-block:8px;margin-inline:-16px;padding-inline:16px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface);font-size:13px}
+  .toc a.on{border-color:var(--accent)}
+  .toc .grp{margin-top:0}
+}
+
+/* lesson */
+.lesson{display:grid;gap:18px;scroll-margin-top:24px;min-width:0}
+.lesson-head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.num{font-family:var(--mono);font-size:13px;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:3px 7px;margin-top:4px}
+.thesis{font-family:var(--display);font-size:clamp(18px,2vw,21px);font-weight:500;line-height:1.35;color:var(--ink);max-width:60ch;border-left:3px solid var(--accent);padding-left:14px}
+figure.diagram{margin:0;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;box-shadow:var(--shadow)}
+figure.diagram .wrap{overflow-x:auto;min-width:0}
+figure.diagram svg{display:block;width:100%;height:auto;min-width:520px;max-width:100%;font-family:var(--body)}
+figcaption{font-size:14px;color:var(--ink-2);margin-top:10px;max-width:70ch}
+.notes{display:none;background:var(--human-fill);border:1px dashed var(--human);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--ink)}
+.notes .caps{color:var(--human);display:block;margin-bottom:4px}
+:root[data-notes="on"] .notes{display:block}
+details.disc{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+details.disc summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:10px}
+details.disc summary::-webkit-details-marker{display:none}
+details.disc summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(-45deg);transition:transform .15s;flex:none}
+details.disc[open] summary::before{transform:rotate(45deg)}
+details.disc .body{padding:0 16px 14px 32px;font-size:15px;color:var(--ink-2);display:grid;gap:10px}
+details.disc ul,details.disc ol{margin:0;padding-left:18px;display:grid;gap:6px}
+details.why summary::after{content:"Director view";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+details.deeper summary::after{content:"Mechanics";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--model)}
+details.basics summary::after{content:"From zero";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--tool)}
+.disc-row{display:grid;gap:10px}
+strong{color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.tblwrap{overflow-x:auto;min-width:0}
+
+/* end sections */
+.endsec{display:grid;gap:14px;scroll-margin-top:24px;min-width:0}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gloss div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink-2)}
+.gloss b{display:block;color:var(--ink);font-family:var(--display);font-size:15px}
+.qs{display:grid;gap:8px;padding-left:0;margin:0;list-style:none;counter-reset:q}
+.qs li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 44px;position:relative;font-size:15px}
+.qs li::before{counter-increment:q;content:counter(q);position:absolute;left:14px;top:10px;font-family:var(--mono);font-size:12px;color:var(--accent)}
+.reads{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.reads li{font-size:14.5px;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--line)}
+.reads b{color:var(--ink)}
+.footer{margin-top:56px;border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}
+.footer a{text-decoration:none;font-weight:600}
+
+/* diagram element classes (inline SVG picks up page tokens) */
+.dg .tx{fill:var(--ink)}
+.dg .tx-muted{fill:var(--ink-2)}
+.dg .tx-on{fill:#fff}
+.dg .tx-data{fill:var(--data)} .dg .tx-model{fill:var(--model)} .dg .tx-human{fill:var(--human)} .dg .tx-tool{fill:var(--tool)} .dg .tx-risk{fill:var(--risk)} .dg .tx-neutral{fill:var(--ink-2)}
+.dg .caps{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.dg .halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.dg .bx{stroke-width:1.6}
+.dg .bx-data{fill:var(--data-fill);stroke:var(--data)} .dg .bx-model{fill:var(--model-fill);stroke:var(--model)} .dg .bx-human{fill:var(--human-fill);stroke:var(--human)} .dg .bx-tool{fill:var(--tool-fill);stroke:var(--tool)} .dg .bx-risk{fill:var(--risk-fill);stroke:var(--risk)} .dg .bx-neutral{fill:var(--neutral-fill);stroke:var(--neutral)}
+.dg .dashed{stroke-dasharray:5 4}
+.dg .fr{fill:none;stroke-width:1.2;stroke-dasharray:4 4}
+.dg .fr-data{stroke:var(--data)} .dg .fr-model{stroke:var(--model)} .dg .fr-human{stroke:var(--human)} .dg .fr-tool{stroke:var(--tool)} .dg .fr-risk{stroke:var(--risk)} .dg .fr-neutral{stroke:var(--line)}
+.dg .st{stroke:none} .dg .st-data{fill:var(--data)} .dg .st-model{fill:var(--model)} .dg .st-human{fill:var(--human)} .dg .st-tool{fill:var(--tool)} .dg .st-risk{fill:var(--risk)} .dg .st-neutral{fill:var(--neutral)}
+.dg .dt{stroke:var(--surface);stroke-width:2} .dg .dt-data{fill:var(--data)} .dg .dt-model{fill:var(--model)} .dg .dt-human{fill:var(--human)} .dg .dt-tool{fill:var(--tool)} .dg .dt-risk{fill:var(--risk)} .dg .dt-neutral{fill:var(--neutral)}
+.dg .ln{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dg .ln-neutral{stroke:var(--ink-2)} .dg .ln-data{stroke:var(--data)} .dg .ln-model{stroke:var(--model)} .dg .ln-human{stroke:var(--human)} .dg .ln-tool{stroke:var(--tool)} .dg .ln-risk{stroke:var(--risk)} .dg .ln-faint{stroke:var(--line)}
+.dg .fl{stroke:none} .dg .fl.ln-data{fill:var(--data-fill)} .dg .fl.ln-model{fill:var(--model-fill)} .dg .fl.ln-neutral{fill:var(--neutral-fill)} .dg .fl.ln-risk{fill:var(--risk-fill)} .dg .fl.ln-tool{fill:var(--tool-fill)} .dg .fl.ln-human{fill:var(--human-fill)}
+.dg .ah{stroke:none} .dg .ah-neutral{fill:var(--ink-2)} .dg .ah-data{fill:var(--data)} .dg .ah-model{fill:var(--model)} .dg .ah-human{fill:var(--human)} .dg .ah-tool{fill:var(--tool)} .dg .ah-risk{fill:var(--risk)}
+.dg .bar{fill:var(--data)} .dg .grid{stroke:var(--line-2)}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="masthead">
+  <div class="series"><span>Visual primers for product leaders</span><span>·</span><span class="mod">Module 2 of 4</span></div>
+  <h1>ML Fundamentals</h1>
+  <p class="lede">How a model learns from data, how you know whether it is any good, and how it gets from a notebook into a product. This is the ring underneath LLMs, and it still runs most of the AI in production. Sections 04 and 09 carry the diagnostic habits from Andrew Ng's Stanford CS229.</p>
+  <div class="modlinks"><a href="./">← All modules</a><a href="ai-foundations.html">1. AI Foundations</a><a href="ml-fundamentals.html" aria-current="page">2. ML Fundamentals</a><a href="spec-driven-development.html">3. Spec-Driven Development</a><a href="agentic-ai.html">4. Agentic AI</a></div>
+  <div class="toolbar">
+    <label class="switch"><input type="checkbox" id="notes-toggle"> Teaching notes</label>
+    <button class="btn" id="expand-all" type="button">Expand all</button>
+    <div class="key"><span class="caps">Colour key</span><span class="sw sw-data"><i></i>Data</span><span class="sw sw-model"><i></i>Model / compute</span><span class="sw sw-human"><i></i>People</span><span class="sw sw-tool"><i></i>Tools &amp; systems</span><span class="sw sw-risk"><i></i>Risk</span></div>
+  </div>
+</header>
+<div class="layout">
+<nav class="toc" aria-label="Sections"><a href="#kinds"><span class="n">01</span><span>Three kinds of learning</span></a><a href="#lifecycle"><span class="n">02</span><span>The ML lifecycle</span></a><a href="#training"><span class="n">03</span><span>What training is</span></a><a href="#bias-variance"><span class="n">04</span><span>Bias vs variance</span></a><a href="#data"><span class="n">05</span><span>Data is the product</span></a><a href="#model-zoo"><span class="n">06</span><span>The model zoo</span></a><a href="#neural-nets"><span class="n">07</span><span>Neural networks</span></a><a href="#evaluation"><span class="n">08</span><span>Evaluating a model</span></a><a href="#diagnose"><span class="n">09</span><span>Diagnosing failures</span></a><a href="#mlops"><span class="n">10</span><span>From model to product</span></a><a href="#classical-vs-llm"><span class="n">11</span><span>Classical ML vs LLM</span></a><a href="#embeddings"><span class="n">12</span><span>Embeddings</span></a><a href="#knobs"><span class="n">13</span><span>Cost, speed, quality</span></a><a class="grp" href="#glossary"><span class="n">G</span><span>Glossary</span></a><a href="#questions"><span class="n">Q</span><span>Questions to ask</span></a><a href="#reading"><span class="n">R</span><span>Reading list</span></a></nav>
+<main>
+<section class="lesson" id="kinds">
+<div class="lesson-head"><span class="num">01</span><h2>Machine learning comes in three flavours, defined by what feedback the model gets</h2></div>
+<p class="thesis">Supervised learning has the right answers; unsupervised learning has only the data; reinforcement learning has a reward. Almost every business use case is supervised, which means someone has to produce the labels.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 270" role="img" aria-label="Three panels: supervised learning from labelled examples, unsupervised learning finding structure in unlabelled data, reinforcement learning from rewards in an environment" xmlns="http://www.w3.org/2000/svg">
+<rect class="fr fr-data" x="10" y="10" width="236" height="250" rx="14"/>
+<text class="tx tx-data caps" x="22" y="28" text-anchor="start" style="font-size:11px;font-weight:600">Supervised</text>
+<rect class="bx bx-data" x="24" y="50" width="110" height="52" rx="10"/>
+<text class="tx tx-data" x="79.0" y="73.0" text-anchor="middle" style="font-size:12px;font-weight:600">Examples</text>
+<text class="tx tx-muted" x="79.0" y="89.0" text-anchor="middle" style="font-size:11px">with labels</text>
+<rect class="bx bx-model" x="24" y="150" width="110" height="52" rx="10"/>
+<text class="tx tx-model" x="79.0" y="173.0" text-anchor="middle" style="font-size:12px;font-weight:600">Predictor</text>
+<text class="tx tx-muted" x="79.0" y="189.0" text-anchor="middle" style="font-size:11px">new input → label</text>
+<line class="ln ln-model" x1="79" y1="102" x2="79.0" y2="140.0"/>
+<polygon class="ah ah-model" points="79.0,148.0 74.5,139.0 83.5,139.0"/>
+<text class="tx tx-muted halo" x="79.0" y="121.0" text-anchor="middle" style="font-size:11px">train</text>
+<text class="tx tx-muted" x="150" y="62" text-anchor="start" style="font-size:11px">email → spam?</text>
+<text class="tx tx-muted" x="150" y="77" text-anchor="start" style="font-size:11px">claim → fraud?</text>
+<text class="tx tx-muted" x="150" y="92" text-anchor="start" style="font-size:11px">photo → cat?</text>
+<text class="tx tx-muted" x="150" y="160" text-anchor="start" style="font-size:11px">Most business ML.</text>
+<text class="tx tx-muted" x="150" y="175" text-anchor="start" style="font-size:11px">Needs labelled</text>
+<text class="tx tx-muted" x="150" y="190" text-anchor="start" style="font-size:11px">history.</text>
+<rect class="fr fr-model" x="262" y="10" width="236" height="250" rx="14"/>
+<text class="tx tx-model caps" x="274" y="28" text-anchor="start" style="font-size:11px;font-weight:600">Unsupervised</text>
+<rect class="bx bx-data" x="276" y="50" width="110" height="52" rx="10"/>
+<text class="tx tx-data" x="331.0" y="73.0" text-anchor="middle" style="font-size:12px;font-weight:600">Unlabelled</text>
+<text class="tx tx-muted" x="331.0" y="89.0" text-anchor="middle" style="font-size:11px">raw records</text>
+<rect class="bx bx-model" x="276" y="150" width="110" height="52" rx="10"/>
+<text class="tx tx-model" x="331.0" y="173.0" text-anchor="middle" style="font-size:12px;font-weight:600">Structure</text>
+<text class="tx tx-muted" x="331.0" y="189.0" text-anchor="middle" style="font-size:11px">groups, outliers</text>
+<line class="ln ln-model" x1="331" y1="102" x2="331.0" y2="140.0"/>
+<polygon class="ah ah-model" points="331.0,148.0 326.5,139.0 335.5,139.0"/>
+<text class="tx tx-muted halo" x="331.0" y="121.0" text-anchor="middle" style="font-size:11px">find</text>
+<text class="tx tx-muted" x="402" y="62" text-anchor="start" style="font-size:11px">customers →</text>
+<text class="tx tx-muted" x="402" y="77" text-anchor="start" style="font-size:11px">segments</text>
+<text class="tx tx-muted" x="402" y="92" text-anchor="start" style="font-size:11px">logs → anomalies</text>
+<text class="tx tx-muted" x="402" y="160" text-anchor="start" style="font-size:11px">No labels needed.</text>
+<text class="tx tx-muted" x="402" y="175" text-anchor="start" style="font-size:11px">Harder to judge</text>
+<text class="tx tx-muted" x="402" y="190" text-anchor="start" style="font-size:11px">&#x27;correct&#x27;.</text>
+<rect class="fr fr-human" x="514" y="10" width="236" height="250" rx="14"/>
+<text class="tx tx-human caps" x="526" y="28" text-anchor="start" style="font-size:11px;font-weight:600">Reinforcement</text>
+<rect class="bx bx-model" x="528" y="50" width="100" height="52" rx="10"/>
+<text class="tx tx-model" x="578.0" y="73.0" text-anchor="middle" style="font-size:12px;font-weight:600">Agent</text>
+<text class="tx tx-muted" x="578.0" y="89.0" text-anchor="middle" style="font-size:11px">tries actions</text>
+<rect class="bx bx-tool" x="528" y="160" width="100" height="52" rx="10"/>
+<text class="tx tx-tool" x="578.0" y="183.0" text-anchor="middle" style="font-size:12px;font-weight:600">Environment</text>
+<text class="tx tx-muted" x="578.0" y="199.0" text-anchor="middle" style="font-size:11px">responds</text>
+<line class="ln ln-model" x1="560" y1="102" x2="560.0" y2="150.0"/>
+<polygon class="ah ah-model" points="560.0,158.0 555.5,149.0 564.5,149.0"/>
+<text class="tx tx-muted halo" x="560.0" y="126.0" text-anchor="middle" style="font-size:11px">action</text>
+<line class="ln ln-human" x1="596" y1="158" x2="596.0" y2="110.0"/>
+<polygon class="ah ah-human" points="596.0,102.0 600.5,111.0 591.5,111.0"/>
+<text class="tx tx-muted halo" x="596.0" y="136.0" text-anchor="middle" style="font-size:11px">reward</text>
+<text class="tx tx-muted" x="642" y="62" text-anchor="start" style="font-size:11px">game moves</text>
+<text class="tx tx-muted" x="642" y="77" text-anchor="start" style="font-size:11px">ad bidding</text>
+<text class="tx tx-muted" x="642" y="92" text-anchor="start" style="font-size:11px">LLM alignment</text>
+<text class="tx tx-muted" x="642" y="107" text-anchor="start" style="font-size:11px">(RLHF)</text>
+<text class="tx tx-muted" x="642" y="176" text-anchor="start" style="font-size:11px">Learns by trial.</text>
+<text class="tx tx-muted" x="642" y="191" text-anchor="start" style="font-size:11px">Needs a reward</text>
+<text class="tx tx-muted" x="642" y="206" text-anchor="start" style="font-size:11px">signal.</text>
+</svg></div><figcaption>Each panel shows the input on top, the trained artefact below, and the products that live there. The arrow is the training signal that differs between them.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask the learner to classify three features from their own product. Then ask where the labels for the supervised one come from and who pays for them: this is usually the hidden cost in an ML roadmap.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>The labelling budget is the real cost of supervised ML. Historical outcomes (did the customer churn?) are free labels; human judgements (is this review toxic?) are not.</li><li>Unsupervised results need a person to interpret them; plan for analyst time, not just model time.</li><li>Reinforcement learning is powerful but rare in products because it needs a safe place to try things. Its main mainstream use today is shaping LLMs.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Supervised</strong> tasks split into classification (discrete label) and regression (a number). <strong>Unsupervised</strong> methods include clustering (k-means), dimensionality reduction (PCA, UMAP), and anomaly detection. <strong>Self-supervised</strong> learning, where the label is derived from the data itself (predict the next word, fill the blank), is how LLMs are pretrained and blurs the first two categories. <strong>Semi-supervised</strong> and <strong>active learning</strong> reduce labelling cost by choosing which examples to label.</p> <strong>Generative vs discriminative</strong> is a second split inside supervised learning (CS229 lecture 5): discriminative models (logistic regression, trees, most neural networks) learn the boundary between classes directly, while generative models (Naive Bayes, Gaussian discriminant analysis) learn what each class looks like and ask which one a new input resembles. Generative models need less data and were the workhorse of spam filtering; discriminative models win once data is plentiful. This is a different sense of 'generative' from 'generative AI', which just means a model that produces content. <strong>Reinforcement learning</strong> is formalised as a Markov decision process: states, actions, a reward, and the rules for how actions change the world (lectures 16 to 20). The product decision is the reward function: it is the spec, and an agent optimises exactly what it says rather than what you meant. The unsupervised toolkit in the middle panel is k-means and Gaussian mixtures for grouping (lecture 13) and PCA for compressing many features into a few (lecture 15).</div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>label</strong> is the known outcome for a training example. A <strong>feature</strong> is one input variable (age, amount, number of logins). A <strong>prediction</strong> is the model's output for a new example.</p> Tom Mitchell's definition, used in CS229 lecture 1: a program learns from <strong>experience E</strong> at <strong>task T</strong> if its <strong>performance P</strong> on T improves with E. Every ML project can be written as that triple, and if one of the three is missing the project is not ready.</div></details>
+</div></section>
+<section class="lesson" id="lifecycle">
+<div class="lesson-head"><span class="num">02</span><h2>An ML system is a loop, not a launch</h2></div>
+<p class="thesis">Framing, data, training, evaluation, deployment, and monitoring feed each other. The model you ship is a snapshot; the loop is the asset, and the team that owns the loop owns the outcome.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 340" role="img" aria-label="Eight-step machine learning lifecycle loop: frame, collect data, prepare and label, train, evaluate, deploy, monitor, retrain" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="302.0" y="24.0" width="156" height="52" rx="10"/>
+<text class="tx tx-human" x="380.0" y="47.0" text-anchor="middle" style="font-size:12px;font-weight:600">Frame the problem</text>
+<text class="tx tx-muted" x="380.0" y="63.0" text-anchor="middle" style="font-size:11px">what decision, what metric</text>
+<circle class="st st-neutral" cx="302.0" cy="24.0" r="10"/>
+<text class="tx tx-on" x="302.0" y="28.0" text-anchor="middle" style="font-size:11px;font-weight:700">1</text>
+<rect class="bx bx-data" x="514.1320343559643" y="59.14718625761431" width="156" height="52" rx="10"/>
+<text class="tx tx-data" x="592.1320343559643" y="82.14718625761431" text-anchor="middle" style="font-size:12px;font-weight:600">Collect data</text>
+<text class="tx tx-muted" x="592.1320343559643" y="98.14718625761431" text-anchor="middle" style="font-size:11px">logs, history, sources</text>
+<circle class="st st-neutral" cx="514.1320343559643" cy="59.14718625761431" r="10"/>
+<text class="tx tx-on" x="514.1320343559643" y="63.14718625761431" text-anchor="middle" style="font-size:11px;font-weight:700">2</text>
+<rect class="bx bx-data" x="602.0" y="144.0" width="156" height="52" rx="10"/>
+<text class="tx tx-data" x="680.0" y="167.0" text-anchor="middle" style="font-size:12px;font-weight:600">Prepare &amp; label</text>
+<text class="tx tx-muted" x="680.0" y="183.0" text-anchor="middle" style="font-size:11px">clean, join, annotate</text>
+<circle class="st st-neutral" cx="602.0" cy="144.0" r="10"/>
+<text class="tx tx-on" x="602.0" y="148.0" text-anchor="middle" style="font-size:11px;font-weight:700">3</text>
+<rect class="bx bx-model" x="514.1320343559643" y="228.8528137423857" width="156" height="52" rx="10"/>
+<text class="tx tx-model" x="592.1320343559643" y="251.8528137423857" text-anchor="middle" style="font-size:12px;font-weight:600">Train</text>
+<text class="tx tx-muted" x="592.1320343559643" y="267.8528137423857" text-anchor="middle" style="font-size:11px">fit candidate models</text>
+<circle class="st st-neutral" cx="514.1320343559643" cy="228.8528137423857" r="10"/>
+<text class="tx tx-on" x="514.1320343559643" y="232.8528137423857" text-anchor="middle" style="font-size:11px;font-weight:700">4</text>
+<rect class="bx bx-tool" x="302.0" y="264.0" width="156" height="52" rx="10"/>
+<text class="tx tx-tool" x="380.0" y="287.0" text-anchor="middle" style="font-size:12px;font-weight:600">Evaluate</text>
+<text class="tx tx-muted" x="380.0" y="303.0" text-anchor="middle" style="font-size:11px">held-out test, business cost</text>
+<circle class="st st-neutral" cx="302.0" cy="264.0" r="10"/>
+<text class="tx tx-on" x="302.0" y="268.0" text-anchor="middle" style="font-size:11px;font-weight:700">5</text>
+<rect class="bx bx-tool" x="89.86796564403576" y="228.8528137423857" width="156" height="52" rx="10"/>
+<text class="tx tx-tool" x="167.86796564403576" y="251.8528137423857" text-anchor="middle" style="font-size:12px;font-weight:600">Deploy</text>
+<text class="tx tx-muted" x="167.86796564403576" y="267.8528137423857" text-anchor="middle" style="font-size:11px">serve behind an API</text>
+<circle class="st st-neutral" cx="89.86796564403576" cy="228.8528137423857" r="10"/>
+<text class="tx tx-on" x="89.86796564403576" y="232.8528137423857" text-anchor="middle" style="font-size:11px;font-weight:700">6</text>
+<rect class="bx bx-tool" x="2.0" y="144.00000000000003" width="156" height="52" rx="10"/>
+<text class="tx tx-tool" x="80.0" y="167.00000000000003" text-anchor="middle" style="font-size:12px;font-weight:600">Monitor</text>
+<text class="tx tx-muted" x="80.0" y="183.00000000000003" text-anchor="middle" style="font-size:11px">drift, latency, outcomes</text>
+<circle class="st st-neutral" cx="2.0" cy="144.00000000000003" r="10"/>
+<text class="tx tx-on" x="2.0" y="148.00000000000003" text-anchor="middle" style="font-size:11px;font-weight:700">7</text>
+<rect class="bx bx-model" x="89.8679656440357" y="59.14718625761431" width="156" height="52" rx="10"/>
+<text class="tx tx-model" x="167.8679656440357" y="82.14718625761431" text-anchor="middle" style="font-size:12px;font-weight:600">Retrain</text>
+<text class="tx tx-muted" x="167.8679656440357" y="98.14718625761431" text-anchor="middle" style="font-size:11px">new data, new labels</text>
+<circle class="st st-neutral" cx="89.8679656440357" cy="59.14718625761431" r="10"/>
+<text class="tx tx-on" x="89.8679656440357" y="63.14718625761431" text-anchor="middle" style="font-size:11px;font-weight:700">8</text>
+<line class="ln ln-neutral" x1="460.89713725478055" y1="63.40347656323516" x2="503.3" y2="70.4"/>
+<polygon class="ah ah-neutral" points="511.2,71.7 501.6,74.7 503.1,65.8"/>
+<line class="ln ln-neutral" x1="651.1179967207545" y1="142.10907038989654" x2="626.8" y2="118.6"/>
+<polygon class="ah ah-neutral" points="621.0,113.0 630.6,116.1 624.4,122.5"/>
+<line class="ln ln-neutral" x1="621.0140376352098" y1="226.96188413228225" x2="645.4" y2="203.4"/>
+<polygon class="ah ah-neutral" points="651.1,197.9 647.8,207.4 641.5,200.9"/>
+<line class="ln ln-neutral" x1="511.2348971011837" y1="268.25629030562084" x2="468.8" y2="275.3"/>
+<polygon class="ah ah-neutral" points="460.9,276.6 469.0,270.7 470.5,279.6"/>
+<line class="ln ln-neutral" x1="299.10286274521945" y1="276.59652343676487" x2="256.7" y2="269.6"/>
+<polygon class="ah ah-neutral" points="248.8,268.3 258.4,265.3 256.9,274.2"/>
+<line class="ln ln-neutral" x1="108.88200327924548" y1="197.89092961010348" x2="133.2" y2="221.4"/>
+<polygon class="ah ah-neutral" points="139.0,227.0 129.4,223.9 135.6,217.5"/>
+<line class="ln ln-neutral" x1="138.98596236479023" y1="113.03811586771778" x2="114.6" y2="136.6"/>
+<polygon class="ah ah-neutral" points="108.9,142.1 112.2,132.6 118.5,139.1"/>
+<line class="ln ln-neutral" x1="248.76510289881628" y1="71.74370969437915" x2="291.2" y2="64.7"/>
+<polygon class="ah ah-neutral" points="299.1,63.4 291.0,69.3 289.5,60.4"/>
+<text class="tx" x="380" y="165" text-anchor="middle" style="font-size:12px;font-weight:600">Most projects loop here</text>
+<text class="tx tx-muted" x="380" y="183" text-anchor="middle" style="font-size:11px">several times before deploy</text>
+</svg></div><figcaption>Step 1 is the product manager's step and the one most often skipped. Steps 2 and 3 take most of the calendar. Steps 7 and 8 are why ML has an operating cost after launch.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask the learner to guess the share of time per step; the usual answer surprises people (data preparation is often half or more). Then ask what happens if monitoring is skipped: the model silently degrades and nobody knows until a customer complains.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Budget for the loop, not the model: data pipelines, labelling, evaluation, and monitoring are recurring costs.</li><li>Framing decides everything downstream. 'Predict churn' is not a frame; 'flag accounts to call this week, at most 200, ranked by expected saved revenue' is.</li><li>Retraining cadence is a product decision with a cost. Daily for fraud, quarterly for demand forecasting, when-evidence-says for most things.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Framing includes choosing the target variable (what exactly is being predicted), the unit of prediction, the decision the prediction feeds, and the metric that reflects business cost. Data work includes joining sources, handling missing values, deduplication, and defining the point in time at which features are known (to avoid leakage). Training compares several model families with cross-validation. Evaluation is done on a held-out test set and then in a shadow or A/B deployment. Monitoring tracks input drift, prediction drift, and, where available, realised outcomes.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>pipeline</strong> is a chain of automated steps that turn raw data into a trained model or a prediction. <strong>Deployment</strong> means the model runs on a server that other software can call. An <strong>API endpoint</strong> is the address that software calls.</p></div></details>
+</div></section>
+<section class="lesson" id="training">
+<div class="lesson-head"><span class="num">03</span><h2>Training is rolling downhill on an error landscape, one small step at a time</h2></div>
+<p class="thesis">A model starts with random weights. Training measures how wrong it is on the examples (the loss), then nudges every weight a little in the direction that reduces the error, and repeats millions of times. Stop too late and it memorises the examples instead of learning the pattern.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 270" role="img" aria-label="Left: a ball rolling down a loss landscape in steps. Right: loss falling over training steps, with validation loss rising at the end to show overfitting" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="190" y="26" text-anchor="middle" style="font-size:11px;font-weight:600">Gradient descent</text>
+<path class="ln ln-neutral" d="M 40 60 C 120 40, 160 220, 230 200 S 330 90, 360 130" style="stroke-width:2"/>
+<circle class="dt dt-model" cx="70" cy="56" r="7"/>
+<line class="ln ln-model" x1="78" y1="62" x2="105.1" y2="77.9"/>
+<polygon class="ah ah-model" points="112.0,82.0 102.0,81.3 106.5,73.6"/>
+<circle class="dt dt-model" cx="120" cy="88" r="7"/>
+<line class="ln ln-model" x1="128" y1="94" x2="153.0" y2="137.1"/>
+<polygon class="ah ah-model" points="157.0,144.0 148.6,138.5 156.4,134.0"/>
+<circle class="dt dt-model" cx="165" cy="150" r="7"/>
+<line class="ln ln-model" x1="173" y1="156" x2="192.0" y2="179.8"/>
+<polygon class="ah ah-model" points="197.0,186.0 187.9,181.8 194.9,176.2"/>
+<circle class="dt dt-model" cx="205" cy="192" r="7"/>
+<line class="ln ln-model" x1="213" y1="198" x2="219.3" y2="196.2"/>
+<polygon class="ah ah-model" points="227.0,194.0 219.6,200.8 217.1,192.1"/>
+<circle class="dt dt-model" cx="235" cy="200" r="9"/>
+<text class="tx tx-muted" x="255" y="226" text-anchor="start" style="font-size:11px">minimum: best weights</text>
+<text class="tx tx-muted" x="60" y="240" text-anchor="start" style="font-size:11px">each step: measure error, nudge every weight slightly downhill</text>
+<text class="tx tx-muted" x="200" y="258" text-anchor="middle" style="font-size:10px">height = loss (how wrong the model is)</text>
+<text class="tx tx-muted caps" x="580" y="26" text-anchor="middle" style="font-size:11px;font-weight:600">Loss over training</text>
+<line class="ln ln-neutral" x1="430" y1="220" x2="730" y2="220"/>
+<line class="ln ln-neutral" x1="430" y1="220" x2="430" y2="50"/>
+<text class="tx tx-muted" x="580" y="240" text-anchor="middle" style="font-size:10px">training steps →</text>
+<text class="tx tx-muted" x="420" y="135" text-anchor="end" style="font-size:10px">loss</text>
+<path class="ln ln-data" d="M 435 70 C 480 190, 560 205, 725 212" style="stroke-width:2.2"/>
+<path class="ln ln-human dashed" d="M 435 75 C 480 195, 560 195, 610 170 S 690 140, 725 120" style="stroke-width:2.2"/>
+<text class="tx tx-data" x="690" y="205" text-anchor="end" style="font-size:10px">training set</text>
+<text class="tx tx-human" x="690" y="112" text-anchor="end" style="font-size:10px">validation set</text>
+<line class="ln ln-risk dashed" x1="610" y1="60" x2="610" y2="220"/>
+<text class="tx tx-risk" x="612" y="62" text-anchor="start" style="font-size:10px">overfitting begins</text>
+</svg></div><figcaption>Left: the landscape is the loss as a function of the weights; each step is gradient descent. Right: the gap between the training curve and the validation curve is overfitting, and the dashed line is where you should have stopped.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>The ball metaphor is enough for most leaders; the extra idea to land is the right-hand chart. A model that scores perfectly on its own training data has learned nothing you can trust. Ask how they would detect this in a vendor's demo (ask for results on data the vendor never saw).</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>'It scored 99% in testing' means nothing until you know which data it was tested on. Ask for held-out results.</li><li>Training cost is compute time multiplied by iterations; for deep learning that is GPU hours, and for LLMs it is the reason only labs pretrain.</li><li>Overfitting is the ML version of a demo that works only on the demo data. The defence is a validation set the team never tunes against.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>The <strong>loss function</strong> turns predictions and labels into one number (cross-entropy for classification, squared error for regression). <strong>Gradient descent</strong> computes the slope of the loss with respect to every weight (via backpropagation in neural networks) and moves the weights against the slope by a step scaled by the <strong>learning rate</strong>. <strong>Epochs</strong> are full passes over the data; <strong>batches</strong> are the chunks processed per step. <strong>Regularisation</strong> (weight penalties, dropout, early stopping) fights overfitting; <strong>hyperparameters</strong> are the settings chosen by the engineer rather than learned (learning rate, layer sizes, tree depth).</p> Two practical variants from lecture 2: <strong>stochastic (mini-batch) gradient descent</strong> updates on a small batch of examples at a time, which is why training scales to millions of rows, and <strong>Newton's method</strong> takes far fewer but more expensive steps and suits small models such as logistic regression.</div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>weight</strong> or <strong>parameter</strong> is one adjustable number inside the model. A <strong>gradient</strong> is a slope: which direction makes the error go down and how steeply. <strong>Underfitting</strong> is the opposite failure: the model is too simple to capture the pattern at all.</p></div></details>
+</div></section>
+<section class="lesson" id="bias-variance">
+<div class="lesson-head"><span class="num">04</span><h2>Learning curves tell you whether to buy more data or a better model</h2></div>
+<p class="thesis">Plot error against the amount of training data. If training error is low and validation error is high, the model has memorised (high variance) and more data will close the gap. If both are high and close together, the model is too simple (high bias) and more data will not help. This one chart settles the most expensive argument in an ML roadmap.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Two learning-curve panels. Left, high variance: training error low, validation error high, a wide gap that narrows as training examples increase. Right, high bias: both errors high and converging well above the acceptable-error line" xmlns="http://www.w3.org/2000/svg">
+<rect class="fr fr-model" x="10" y="10" width="360" height="280" rx="14"/>
+<text class="tx tx-model caps" x="22" y="28" text-anchor="start" style="font-size:11px;font-weight:600">High variance (overfitting)</text>
+<line class="ln ln-neutral" x1="60" y1="230" x2="350" y2="230"/>
+<line class="ln ln-neutral" x1="60" y1="230" x2="60" y2="50"/>
+<text class="tx tx-muted" x="205" y="250" text-anchor="middle" style="font-size:10px">training examples →</text>
+<text class="tx tx-muted" x="52" y="140" text-anchor="end" style="font-size:10px">error</text>
+<line class="ln ln-tool dashed" x1="60" y1="150" x2="350" y2="150"/>
+<text class="tx tx-tool" x="64" y="146" text-anchor="start" style="font-size:10px">acceptable error</text>
+<path class="ln ln-human dashed" d="M 70 70 C 140 120, 240 128, 340 122" style="stroke-width:2.2"/>
+<path class="ln ln-data" d="M 70 205 C 140 195, 240 185, 340 178" style="stroke-width:2.2"/>
+<text class="tx tx-human" x="300" y="112" text-anchor="end" style="font-size:10px">validation error</text>
+<text class="tx tx-data" x="300" y="200" text-anchor="end" style="font-size:10px">training error</text>
+<line class="ln ln-risk" x1="345" y1="128" x2="345" y2="172"/>
+<polygon class="ah ah-risk" points="345,122 349.5,131 340.5,131"/>
+<polygon class="ah ah-risk" points="345,178 340.5,169 349.5,169"/>
+<text class="tx tx-risk" x="351" y="153" text-anchor="start" style="font-size:10px">gap</text>
+<text class="tx" x="205" y="274" text-anchor="middle" style="font-size:11px;font-weight:600">gap still closing → more data will help</text>
+<rect class="fr fr-risk" x="390" y="10" width="360" height="280" rx="14"/>
+<text class="tx tx-risk caps" x="402" y="28" text-anchor="start" style="font-size:11px;font-weight:600">High bias (underfitting)</text>
+<line class="ln ln-neutral" x1="440" y1="230" x2="730" y2="230"/>
+<line class="ln ln-neutral" x1="440" y1="230" x2="440" y2="50"/>
+<text class="tx tx-muted" x="585" y="250" text-anchor="middle" style="font-size:10px">training examples →</text>
+<text class="tx tx-muted" x="432" y="140" text-anchor="end" style="font-size:10px">error</text>
+<line class="ln ln-tool dashed" x1="440" y1="190" x2="730" y2="190"/>
+<text class="tx tx-tool" x="724" y="204" text-anchor="end" style="font-size:10px">acceptable error</text>
+<path class="ln ln-human dashed" d="M 450 70 C 500 120, 560 138, 720 140" style="stroke-width:2.2"/>
+<path class="ln ln-data" d="M 450 200 C 500 160, 560 146, 720 143" style="stroke-width:2.2"/>
+<text class="tx tx-human" x="600" y="126" text-anchor="middle" style="font-size:10px">validation error</text>
+<text class="tx tx-data" x="600" y="164" text-anchor="middle" style="font-size:10px">training error</text>
+<line class="ln ln-risk" x1="733" y1="148" x2="733" y2="184"/>
+<polygon class="ah ah-risk" points="733,142 737.5,151 728.5,151"/>
+<polygon class="ah ah-risk" points="733,190 728.5,181 737.5,181"/>
+<text class="tx tx-risk" x="727" y="170" text-anchor="end" style="font-size:10px">stuck above target</text>
+<text class="tx" x="585" y="274" text-anchor="middle" style="font-size:11px;font-weight:600">both flat and high → more data will not help</text>
+</svg></div><figcaption>Andrew Ng's learning-curve diagnostic (CS229, lecture 8 and lecture 12). The x-axis is training set size, not training steps as in section 03. Solid blue is error on the training data, dashed orange is error on held-out data, dashed green is the error the product can live with.</figcaption></figure>
+<div class="tblwrap"><table><thead><tr><th>What the curve shows</th><th>Diagnosis</th><th>What helps</th><th>What wastes money</th></tr></thead><tbody>
+<tr><td>Training error low, validation error high, gap still closing</td><td>High variance</td><td>More data, fewer or simpler features, regularisation, a smaller model</td><td>A bigger model</td></tr>
+<tr><td>Both errors high, close together, flat</td><td>High bias</td><td>Richer features, a bigger or more flexible model, less regularisation, boosting</td><td>More data, more labelling</td></tr>
+<tr><td>Both errors low but production results are poor</td><td>Distribution mismatch</td><td>Data that looks like production; check drift and leakage (section 05)</td><td>Any change to the model</td></tr>
+</tbody></table></div>
+<div class="notes"><span class="caps">Teaching notes</span>Ask the learner to sketch the curve for a model their team is evaluating and say which regime it is in. Ng's rule for the class: if you cannot say whether the problem is bias or variance, you cannot say whether the next dollar goes to data or to modelling. The word 'bias' here is statistical, not the fairness sense.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>'We need more data' is the default request and the most expensive one. A learning curve costs a day and tells you in advance whether the data will pay off.</li><li>High bias means the model cannot express the pattern, and no amount of labelling fixes that. Budget for features and modelling instead.</li><li>The diagnosis also sets the story for stakeholders. 'We are data-limited' and 'we are model-limited' lead to different quarters and different hires.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Bias</strong> is error from a model too simple to represent the truth; <strong>variance</strong> is error from sensitivity to the particular training sample. Expected error decomposes roughly into bias², variance, and irreducible noise. <strong>Regularisation</strong> (CS229 lecture 8) trades variance for bias by penalising large weights, and cross-validation picks the strength. Ensembles map onto the same axes: <strong>bagging</strong> (random forests) averages many high-variance trees to cut variance, while <strong>boosting</strong> adds weak, high-bias learners in sequence to cut bias (lecture 9). Learning theory (the discussion section) gives the sample-complexity intuition: the examples needed to hold variance down grow roughly with the number of parameters, which is why a richer model asks for more data to reach the same validation error.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>learning curve</strong> plots error against the number of training examples. <strong>Bias</strong> means the model is consistently wrong in the same way; <strong>variance</strong> means the model's answers would change a lot if you retrained it on a different sample of the same data. <strong>Regularisation</strong> is any penalty that keeps a model simpler than the data alone would make it.</p></div></details>
+</div></section>
+<section class="lesson" id="data">
+<div class="lesson-head"><span class="num">05</span><h2>The data set is split three ways, and both of the classic disasters are data problems, not model problems</h2></div>
+<p class="thesis">Training data teaches, validation data tunes, and test data is opened once to report the honest score. Leakage (test information sneaking into training) inflates scores in the lab; drift (the world changing) deflates them in production.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 260" role="img" aria-label="A dataset bar split into training, validation, and test portions, with a red leakage arrow from test into training, and two shifted distribution curves showing drift" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="20" y="30" text-anchor="start" style="font-size:11px;font-weight:600">One dataset, three jobs</text>
+<rect class="bx bx-data" x="20" y="44" width="440" height="44" rx="10"/>
+<text class="tx tx-data" x="240.0" y="63.0" text-anchor="middle" style="font-size:12px;font-weight:600">Train 70%</text>
+<text class="tx tx-muted" x="240.0" y="79.0" text-anchor="middle" style="font-size:11px">the model learns from this</text>
+<rect class="bx bx-tool" x="470" y="44" width="120" height="44" rx="10"/>
+<text class="tx tx-tool" x="530.0" y="63.0" text-anchor="middle" style="font-size:12px;font-weight:600">Validate 15%</text>
+<text class="tx tx-muted" x="530.0" y="79.0" text-anchor="middle" style="font-size:11px">tune settings</text>
+<rect class="bx bx-human" x="600" y="44" width="140" height="44" rx="10"/>
+<text class="tx tx-human" x="670.0" y="63.0" text-anchor="middle" style="font-size:12px;font-weight:600">Test 15%</text>
+<text class="tx tx-muted" x="670.0" y="79.0" text-anchor="middle" style="font-size:11px">report once, at the end</text>
+<polyline class="ln ln-risk dashed" points="670,88 670,120 240,120 240.0,98.0" fill="none"/>
+<polygon class="ah ah-risk" points="240.0,90.0 244.5,99.0 235.5,99.0"/>
+<text class="tx tx-muted halo" x="455" y="112" text-anchor="middle" style="font-size:11px">leakage: test information reaches training → scores lie</text>
+<text class="tx tx-muted caps" x="20" y="150" text-anchor="start" style="font-size:11px;font-weight:600">Drift: the world moves, the model does not</text>
+<line class="ln ln-faint" x1="20" y1="240" x2="740" y2="240"/>
+<path class="ln ln-data" d="M 40 240 C 120 240, 140 175, 200 175 S 280 240, 360 240" style="stroke-width:2"/>
+<path class="ln ln-human dashed" d="M 300 240 C 380 240, 400 180, 460 180 S 540 240, 620 240" style="stroke-width:2"/>
+<text class="tx tx-data" x="200" y="168" text-anchor="middle" style="font-size:11px">training data</text>
+<text class="tx tx-human" x="460" y="171" text-anchor="middle" style="font-size:11px">today&#x27;s inputs</text>
+<line class="ln ln-neutral" x1="250" y1="210" x2="392.0" y2="210.0"/>
+<polygon class="ah ah-neutral" points="400.0,210.0 391.0,214.5 391.0,205.5"/>
+<text class="tx tx-muted halo" x="325.0" y="204.0" text-anchor="middle" style="font-size:11px">time</text>
+<text class="tx tx-muted" x="640" y="200" text-anchor="start" style="font-size:11px">→ retrain, or</text>
+<text class="tx tx-muted" x="640" y="216" text-anchor="start" style="font-size:11px">predictions decay</text>
+</svg></div><figcaption>Top: the split and the one arrow that must never exist. Bottom: drift as two distributions; the model was fit to the solid one and is now scored on the dashed one.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Give a leakage example a PM will recognise: a churn model trained with a feature like 'account closed date', which is the answer in disguise. For drift, use a pricing model trained before a market shift.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Ask who owns data quality, because nobody else in the loop can compensate for it.</li><li>Leakage is why lab results routinely beat production results. Insist on a time-based split for anything involving history.</li><li>Drift is the ongoing cost. A model with no monitoring is an unmonitored liability with a good launch deck.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Time-based splits</strong> (train on the past, test on the future) mimic production and expose leakage that random splits hide. <strong>Point-in-time correctness</strong> means every feature is computed using only data that existed at prediction time. <strong>Feature stores</strong> centralise those definitions so training and serving compute identical features (avoiding training-serving skew). Drift comes in kinds: input drift (feature distributions move), concept drift (the relationship between inputs and outcome moves), and label delay (you only learn the truth weeks later). Monitoring compares recent input distributions to the training distribution and alerts on divergence.</p> Split sizes follow data volume, not a fixed rule (lecture 8): 70/30 or 60/20/20 is sensible for thousands of examples, while with millions the validation and test sets can be 1% each, because they only need to be large enough to measure the difference you care about. With small data use <strong>k-fold cross-validation</strong>: split into k parts, train on k-1 and validate on the remaining one, rotate, and average, so every example does both jobs.</div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>distribution</strong> describes how often each value appears; the bell curves above are distributions. A <strong>held-out</strong> set is data withheld from training. <strong>Ground truth</strong> is the real outcome, once it is known.</p></div></details>
+</div></section>
+<section class="lesson" id="model-zoo">
+<div class="lesson-head"><span class="num">06</span><h2>Six model families cover almost everything, and the boring ones win on tabular data</h2></div>
+<p class="thesis">Gradient-boosted trees still beat deep learning on rows-and-columns problems, and a logistic regression is often good enough. Neural networks and transformers earn their cost on images, audio, and language.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 280" role="img" aria-label="Scatter of model families on axes of interpretability versus capacity: linear models, decision trees, random forests, gradient boosting, neural networks, transformers" xmlns="http://www.w3.org/2000/svg">
+<line class="ln ln-neutral" x1="70" y1="230" x2="730" y2="230"/>
+<line class="ln ln-neutral" x1="70" y1="230" x2="70" y2="30"/>
+<text class="tx tx-muted" x="400" y="262" text-anchor="middle" style="font-size:11px">harder to explain  →</text>
+<text class="tx tx-muted" x="40" y="130" text-anchor="middle" style="font-size:11px">capacity ↑</text>
+<circle class="dt dt-tool" cx="130" cy="195" r="8"/>
+<text class="tx" x="130" y="179" text-anchor="middle" style="font-size:12px;font-weight:600">Linear / logistic regression</text>
+<text class="tx tx-muted" x="130" y="219" text-anchor="middle" style="font-size:10px">baseline for tabular data</text>
+<circle class="dt dt-tool" cx="230" cy="170" r="8"/>
+<text class="tx" x="230" y="154" text-anchor="middle" style="font-size:12px;font-weight:600">Decision tree</text>
+<text class="tx tx-muted" x="230" y="194" text-anchor="middle" style="font-size:10px">rules you can read</text>
+<circle class="dt dt-data" cx="330" cy="130" r="8"/>
+<text class="tx" x="330" y="114" text-anchor="middle" style="font-size:12px;font-weight:600">Random forest</text>
+<text class="tx tx-muted" x="330" y="154" text-anchor="middle" style="font-size:10px">many trees, averaged</text>
+<circle class="dt dt-data" cx="420" cy="100" r="8"/>
+<text class="tx" x="420" y="84" text-anchor="middle" style="font-size:12px;font-weight:600">Gradient boosting</text>
+<text class="tx tx-muted" x="420" y="124" text-anchor="middle" style="font-size:10px">wins most tabular contests</text>
+<circle class="dt dt-model" cx="540" cy="75" r="8"/>
+<text class="tx" x="540" y="59" text-anchor="middle" style="font-size:12px;font-weight:600">Neural network</text>
+<text class="tx tx-muted" x="540" y="99" text-anchor="middle" style="font-size:10px">images, audio, sequences</text>
+<circle class="dt dt-model" cx="650" cy="50" r="8"/>
+<text class="tx" x="650" y="34" text-anchor="middle" style="font-size:12px;font-weight:600">Transformer / LLM</text>
+<text class="tx tx-muted" x="650" y="74" text-anchor="middle" style="font-size:10px">language, multimodal</text>
+<text class="tx tx-muted" x="400" y="20" text-anchor="middle" style="font-size:11px">For rows-and-columns problems, start at the left; move right only when the data is unstructured</text>
+</svg></div><figcaption>Position is approximate and the axes trade off: every step right buys capacity and spends explainability and cost. The table below is the same information as a decision aid.</figcaption></figure>
+<div class="tblwrap"><table><thead><tr><th>Family</th><th>Best for</th><th>Watch out for</th><th>Explainable?</th></tr></thead><tbody>
+<tr><td>Linear / logistic regression</td><td>Baselines, pricing, risk scores with few features</td><td>Misses interactions and non-linear patterns</td><td>Yes, coefficient by coefficient</td></tr>
+<tr><td>Decision tree</td><td>Rules people must read and approve</td><td>Unstable; overfits alone</td><td>Yes, as a flowchart</td></tr>
+<tr><td>Random forest</td><td>Robust default for tabular data</td><td>Large, slower to serve</td><td>Partly (feature importance)</td></tr>
+<tr><td>Gradient boosting (XGBoost, LightGBM)</td><td>Most tabular prediction: fraud, churn, demand</td><td>Needs tuning; can overfit</td><td>Partly (SHAP values)</td></tr>
+<tr><td>Neural network</td><td>Images, audio, sequences, very large data</td><td>Data hungry, GPU cost, opaque</td><td>Weakly</td></tr>
+<tr><td>Transformer / LLM</td><td>Language, code, multimodal, generation</td><td>Cost, latency, hallucination</td><td>Weakly, but can explain in words</td></tr>
+</tbody></table></div>
+<div class="notes"><span class="caps">Teaching notes</span>The message for leaders is that 'use AI' does not mean 'use an LLM'. Have the learner pick a family for churn prediction (boosting), for a lending decision that regulators review (logistic or tree), and for support-ticket summarisation (LLM).</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Choosing a simpler family is a legitimate product decision when explainability, latency, or cost matter more than the last point of accuracy.</li><li>Regulated decisions (credit, hiring, health) often require explainable models; this constrains you to the left half.</li><li>Ask for the baseline. A team that cannot beat logistic regression by a meaningful margin should ship logistic regression.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Ensembles</strong> combine many weak models: forests average trees trained on random subsets; boosting trains trees sequentially on the previous errors. <strong>SHAP values</strong> attribute a prediction to features, giving partial explainability to ensembles. <strong>Neural networks</strong> generalise the linear model by stacking layers with non-linear activations; convolutional layers suit images, recurrent layers suited sequences until transformers replaced them. Choosing among families is done empirically with cross-validation on the validation set; the winner is rarely predictable in advance, which is why teams try several.</p> The two ensemble styles fix different failures (lecture 9): bagging cuts variance, boosting cuts bias; section 04 explains which one your model has. <strong>Support vector machines</strong> with kernels (lectures 6 and 7) were the state of the art before deep learning and remain strong on small, high-dimensional problems; a kernel lets the model work from similarity between examples instead of raw features, the same idea embeddings use in section 12. <strong>Non-parametric</strong> methods such as nearest neighbours and locally weighted regression (lecture 3) keep the training data around at prediction time, so serving cost grows with the data.</div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Tabular</strong> data is a spreadsheet: one row per example, one column per feature. <strong>Interpretability</strong> is whether a person can see why the model produced a given output. A <strong>baseline</strong> is the simplest reasonable model, used to judge whether a complex one is worth it.</p></div></details>
+</div></section>
+<section class="lesson" id="neural-nets">
+<div class="lesson-head"><span class="num">07</span><h2>A neural network is layers of weighted sums, and depth is what makes it powerful</h2></div>
+<p class="thesis">Each node multiplies its inputs by learned weights, adds them up, and passes the result through a simple non-linear function. Stack enough layers and the network can represent almost any pattern, which is why the same idea recognises faces, transcribes speech, and writes text.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 260" role="img" aria-label="A small neural network: three input nodes, two hidden layers of four nodes, two output nodes, fully connected by lines representing weights" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-data caps" x="120" y="40" text-anchor="middle" style="font-size:11px;font-weight:600">Inputs</text>
+<text class="tx tx-model caps" x="300" y="40" text-anchor="middle" style="font-size:11px;font-weight:600">Hidden layer</text>
+<text class="tx tx-model caps" x="480" y="40" text-anchor="middle" style="font-size:11px;font-weight:600">Hidden layer</text>
+<text class="tx tx-tool caps" x="660" y="40" text-anchor="middle" style="font-size:11px;font-weight:600">Outputs</text>
+<line class="ln ln-faint" x1="120" y1="90.0" x2="300" y2="70.0"/>
+<line class="ln ln-faint" x1="120" y1="90.0" x2="300" y2="110.0"/>
+<line class="ln ln-faint" x1="120" y1="90.0" x2="300" y2="150.0"/>
+<line class="ln ln-faint" x1="120" y1="90.0" x2="300" y2="190.0"/>
+<line class="ln ln-faint" x1="120" y1="130.0" x2="300" y2="70.0"/>
+<line class="ln ln-faint" x1="120" y1="130.0" x2="300" y2="110.0"/>
+<line class="ln ln-faint" x1="120" y1="130.0" x2="300" y2="150.0"/>
+<line class="ln ln-faint" x1="120" y1="130.0" x2="300" y2="190.0"/>
+<line class="ln ln-faint" x1="120" y1="170.0" x2="300" y2="70.0"/>
+<line class="ln ln-faint" x1="120" y1="170.0" x2="300" y2="110.0"/>
+<line class="ln ln-faint" x1="120" y1="170.0" x2="300" y2="150.0"/>
+<line class="ln ln-faint" x1="120" y1="170.0" x2="300" y2="190.0"/>
+<line class="ln ln-faint" x1="300" y1="70.0" x2="480" y2="70.0"/>
+<line class="ln ln-faint" x1="300" y1="70.0" x2="480" y2="110.0"/>
+<line class="ln ln-faint" x1="300" y1="70.0" x2="480" y2="150.0"/>
+<line class="ln ln-faint" x1="300" y1="70.0" x2="480" y2="190.0"/>
+<line class="ln ln-faint" x1="300" y1="110.0" x2="480" y2="70.0"/>
+<line class="ln ln-faint" x1="300" y1="110.0" x2="480" y2="110.0"/>
+<line class="ln ln-faint" x1="300" y1="110.0" x2="480" y2="150.0"/>
+<line class="ln ln-faint" x1="300" y1="110.0" x2="480" y2="190.0"/>
+<line class="ln ln-faint" x1="300" y1="150.0" x2="480" y2="70.0"/>
+<line class="ln ln-faint" x1="300" y1="150.0" x2="480" y2="110.0"/>
+<line class="ln ln-faint" x1="300" y1="150.0" x2="480" y2="150.0"/>
+<line class="ln ln-faint" x1="300" y1="150.0" x2="480" y2="190.0"/>
+<line class="ln ln-faint" x1="300" y1="190.0" x2="480" y2="70.0"/>
+<line class="ln ln-faint" x1="300" y1="190.0" x2="480" y2="110.0"/>
+<line class="ln ln-faint" x1="300" y1="190.0" x2="480" y2="150.0"/>
+<line class="ln ln-faint" x1="300" y1="190.0" x2="480" y2="190.0"/>
+<line class="ln ln-faint" x1="480" y1="70.0" x2="660" y2="110.0"/>
+<line class="ln ln-faint" x1="480" y1="70.0" x2="660" y2="150.0"/>
+<line class="ln ln-faint" x1="480" y1="110.0" x2="660" y2="110.0"/>
+<line class="ln ln-faint" x1="480" y1="110.0" x2="660" y2="150.0"/>
+<line class="ln ln-faint" x1="480" y1="150.0" x2="660" y2="110.0"/>
+<line class="ln ln-faint" x1="480" y1="150.0" x2="660" y2="150.0"/>
+<line class="ln ln-faint" x1="480" y1="190.0" x2="660" y2="110.0"/>
+<line class="ln ln-faint" x1="480" y1="190.0" x2="660" y2="150.0"/>
+<circle class="dt dt-data" cx="120" cy="90.0" r="12"/>
+<circle class="dt dt-data" cx="120" cy="130.0" r="12"/>
+<circle class="dt dt-data" cx="120" cy="170.0" r="12"/>
+<circle class="dt dt-model" cx="300" cy="70.0" r="12"/>
+<circle class="dt dt-model" cx="300" cy="110.0" r="12"/>
+<circle class="dt dt-model" cx="300" cy="150.0" r="12"/>
+<circle class="dt dt-model" cx="300" cy="190.0" r="12"/>
+<circle class="dt dt-model" cx="480" cy="70.0" r="12"/>
+<circle class="dt dt-model" cx="480" cy="110.0" r="12"/>
+<circle class="dt dt-model" cx="480" cy="150.0" r="12"/>
+<circle class="dt dt-model" cx="480" cy="190.0" r="12"/>
+<circle class="dt dt-tool" cx="660" cy="110.0" r="12"/>
+<circle class="dt dt-tool" cx="660" cy="150.0" r="12"/>
+<text class="tx tx-muted" x="30" y="118" text-anchor="start" style="font-size:10px">amount</text>
+<text class="tx tx-muted" x="30" y="158" text-anchor="start" style="font-size:10px">hour</text>
+<text class="tx tx-muted" x="30" y="198" text-anchor="start" style="font-size:10px">country</text>
+<text class="tx tx-muted" x="700" y="112" text-anchor="start" style="font-size:10px">fraud</text>
+<text class="tx tx-muted" x="700" y="152" text-anchor="start" style="font-size:10px">legit</text>
+<text class="tx tx-muted" x="390" y="235" text-anchor="middle" style="font-size:11px">each line is a weight, a learned number; each node adds up its inputs and applies a simple non-linear squash</text>
+<text class="tx tx-muted" x="390" y="252" text-anchor="middle" style="font-size:11px">this toy has 46 weights; a frontier LLM has hundreds of billions, which is why they run on GPUs</text>
+</svg></div><figcaption>Data flows left to right; training flows right to left (errors propagate back to adjust the weights). The number of weights is the 'parameters' figure vendors quote.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Count the lines with the learner to make 'parameters' concrete, then scale up: a 70-billion-parameter model is this picture with a billion and a half times more lines. That is the reason for GPUs and for inference cost.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Parameter count is a rough proxy for capability and a direct driver of serving cost. More is not automatically better for your task.</li><li>Deep learning needs a lot of data and compute to beat simpler models; for small tabular problems it usually does not.</li><li>GPU capacity is a supply-chain and budget item for any team hosting its own models.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Each layer computes <em>output = activation(W × input + b)</em>. Activations (ReLU, GELU) introduce non-linearity; without them, stacked layers collapse to one linear model. <strong>Backpropagation</strong> applies the chain rule to compute gradients for every weight efficiently. Specialised layers encode structure: convolutions share weights across positions in an image; attention (Module 1, section 3) lets each position in a sequence weigh all others. <strong>Mixture-of-experts</strong> models route each token through a subset of the network, so a very large model can be cheap per token.</p> Lecture 11 covers the fixes that make deep networks trainable in practice: careful weight initialisation and normalisation so signals neither vanish nor explode across many layers, mini-batch training, and adaptive optimisers such as Adam. These are what a data scientist means by 'the training was unstable'.</div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>GPU</strong> is a chip built to run thousands of small multiplications in parallel, originally for graphics, now for the matrix arithmetic in this picture. <strong>Parameters</strong> and <strong>weights</strong> mean the same thing here. A <strong>layer</strong> is one column of nodes.</p></div></details>
+</div></section>
+<section class="lesson" id="evaluation">
+<div class="lesson-head"><span class="num">08</span><h2>Accuracy hides the two mistakes that matter; precision and recall name them</h2></div>
+<p class="thesis">A model that never flags fraud is 99% accurate if 1% of transactions are fraud. Precision and recall separate 'when we act, are we right' from 'do we catch what matters', and the threshold between them is a business decision, not a technical one.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 280" role="img" aria-label="Two-by-two confusion matrix with business labels, and formulas for precision and recall with a threshold trade-off arrow" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="200" y="26" text-anchor="middle" style="font-size:11px;font-weight:600">Confusion matrix (fraud example)</text>
+<text class="tx tx-muted" x="120" y="56" text-anchor="middle" style="font-size:11px">predicted: fraud</text>
+<text class="tx tx-muted" x="280" y="56" text-anchor="middle" style="font-size:11px">predicted: legit</text>
+<text class="tx tx-muted" x="48" y="106" text-anchor="end" style="font-size:11px">actual</text>
+<text class="tx tx-muted" x="48" y="120" text-anchor="end" style="font-size:11px">fraud</text>
+<text class="tx tx-muted" x="48" y="186" text-anchor="end" style="font-size:11px">actual</text>
+<text class="tx tx-muted" x="48" y="200" text-anchor="end" style="font-size:11px">legit</text>
+<rect class="bx bx-tool" x="60" y="70" width="120" height="70" rx="10"/>
+<text class="tx tx-tool" x="120.0" y="102.0" text-anchor="middle" style="font-size:12px;font-weight:600">True positive</text>
+<text class="tx tx-muted" x="120.0" y="118.0" text-anchor="middle" style="font-size:11px">fraud caught</text>
+<rect class="bx bx-risk" x="220" y="70" width="120" height="70" rx="10"/>
+<text class="tx tx-risk" x="280.0" y="102.0" text-anchor="middle" style="font-size:12px;font-weight:600">False negative</text>
+<text class="tx tx-muted" x="280.0" y="118.0" text-anchor="middle" style="font-size:11px">fraud missed</text>
+<rect class="bx bx-risk" x="60" y="150" width="120" height="70" rx="10"/>
+<text class="tx tx-risk" x="120.0" y="182.0" text-anchor="middle" style="font-size:12px;font-weight:600">False positive</text>
+<text class="tx tx-muted" x="120.0" y="198.0" text-anchor="middle" style="font-size:11px">good customer blocked</text>
+<rect class="bx bx-tool" x="220" y="150" width="120" height="70" rx="10"/>
+<text class="tx tx-tool" x="280.0" y="182.0" text-anchor="middle" style="font-size:12px;font-weight:600">True negative</text>
+<text class="tx tx-muted" x="280.0" y="198.0" text-anchor="middle" style="font-size:11px">correctly ignored</text>
+<text class="tx tx-muted caps" x="440" y="26" text-anchor="start" style="font-size:11px;font-weight:600">Two questions, two numbers</text>
+<text class="tx" x="440" y="70" text-anchor="start" style="font-size:13px;font-weight:600">Precision = TP ÷ (TP + FP)</text>
+<text class="tx tx-muted" x="440" y="88" text-anchor="start" style="font-size:11px">when we flag something, how often are we right?</text>
+<text class="tx" x="440" y="124" text-anchor="start" style="font-size:13px;font-weight:600">Recall = TP ÷ (TP + FN)</text>
+<text class="tx tx-muted" x="440" y="142" text-anchor="start" style="font-size:11px">of all the real fraud, how much did we catch?</text>
+<line class="ln ln-faint" x1="440" y1="200" x2="720" y2="200" style="stroke-width:3"/>
+<circle class="dt dt-model" cx="580" cy="200" r="7"/>
+<text class="tx tx-muted" x="440" y="222" text-anchor="start" style="font-size:10px">strict threshold</text>
+<text class="tx tx-muted" x="720" y="222" text-anchor="end" style="font-size:10px">loose threshold</text>
+<text class="tx tx-muted" x="440" y="240" text-anchor="start" style="font-size:10px">↑ precision, ↓ recall</text>
+<text class="tx tx-muted" x="720" y="240" text-anchor="end" style="font-size:10px">↓ precision, ↑ recall</text>
+<text class="tx" x="580" y="262" text-anchor="middle" style="font-size:11px;font-weight:600">the threshold is a business decision: which mistake costs more?</text>
+</svg></div><figcaption>Left: every prediction lands in one of four cells; the two red cells are the two kinds of mistake. Right: sliding the decision threshold trades one mistake for the other.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Have the learner assign a dollar cost to each red cell for their own use case. The threshold falls out of that arithmetic. Then point out that the same model can be 'precise' or 'thorough' depending on where the product team sets it.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Own the threshold. It encodes your tolerance for each mistake and should be set by the people who understand the cost of each.</li><li>Ask for precision and recall (or the full matrix) rather than accuracy, especially when the positive class is rare.</li><li>The two mistakes usually have different owners: false positives hit customer experience, false negatives hit risk or revenue. Make both visible in the dashboard.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>F1</strong> is the harmonic mean of precision and recall, a single number when you need one. The <strong>ROC curve</strong> plots true-positive rate against false-positive rate across thresholds; <strong>AUC</strong> summarises it (0.5 is coin-flip, 1.0 is perfect). For imbalanced problems the <strong>precision-recall curve</strong> is more informative than ROC. Regression models use error metrics (MAE, RMSE) and should be compared to a naive baseline (predict the average, or yesterday's value). <strong>Calibration</strong> asks whether a predicted 80% actually happens 80% of the time; it matters when the score itself is shown to users or used in expected-value calculations.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>threshold</strong> is the score above which the model says 'yes'. A <strong>positive</strong> is the thing you are looking for (fraud, churn, a match). A <strong>rare class</strong> is a positive that appears in a small fraction of examples, which is where accuracy misleads.</p></div></details>
+</div></section>
+<section class="lesson" id="diagnose">
+<div class="lesson-head"><span class="num">09</span><h2>Before you improve the model, find out which part of it is failing</h2></div>
+<p class="thesis">Build the quick-and-dirty version first, then diagnose. Error analysis swaps each pipeline stage for a perfect version to see where accuracy jumps; ablative analysis removes each improvement to see which ones earned their keep. Both stop a team spending a quarter on the wrong component.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="A five-stage ticket-routing pipeline above a bar chart of whole-system accuracy after each stage is replaced with perfect output, cumulatively. The classify-intent stage produces the largest jump" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-data" x="20" y="34" width="128" height="44" rx="10"/>
+<text class="tx tx-data" x="84" y="53" text-anchor="middle" style="font-size:12px;font-weight:600">Clean text</text>
+<text class="tx tx-muted" x="84" y="68" text-anchor="middle" style="font-size:10px">strip signatures, quotes</text>
+<line class="ln ln-neutral" x1="148" y1="56" x2="154" y2="56"/>
+<polygon class="ah ah-neutral" points="162,56 153,60.5 153,51.5"/>
+<rect class="bx bx-tool" x="162" y="34" width="128" height="44" rx="10"/>
+<text class="tx tx-tool" x="226" y="53" text-anchor="middle" style="font-size:12px;font-weight:600">Detect language</text>
+<text class="tx tx-muted" x="226" y="68" text-anchor="middle" style="font-size:10px">en, de, fr…</text>
+<line class="ln ln-neutral" x1="290" y1="56" x2="296" y2="56"/>
+<polygon class="ah ah-neutral" points="304,56 295,60.5 295,51.5"/>
+<rect class="bx bx-model" x="304" y="34" width="128" height="44" rx="10"/>
+<text class="tx tx-model" x="368" y="53" text-anchor="middle" style="font-size:12px;font-weight:600">Extract entities</text>
+<text class="tx tx-muted" x="368" y="68" text-anchor="middle" style="font-size:10px">product, order, plan</text>
+<line class="ln ln-neutral" x1="432" y1="56" x2="438" y2="56"/>
+<polygon class="ah ah-neutral" points="446,56 437,60.5 437,51.5"/>
+<rect class="bx bx-model" x="446" y="34" width="128" height="44" rx="10"/>
+<text class="tx tx-model" x="510" y="53" text-anchor="middle" style="font-size:12px;font-weight:600">Classify intent</text>
+<text class="tx tx-muted" x="510" y="68" text-anchor="middle" style="font-size:10px">refund, bug, how-to</text>
+<line class="ln ln-neutral" x1="574" y1="56" x2="580" y2="56"/>
+<polygon class="ah ah-neutral" points="588,56 579,60.5 579,51.5"/>
+<rect class="bx bx-tool" x="588" y="34" width="128" height="44" rx="10"/>
+<text class="tx tx-tool" x="652" y="53" text-anchor="middle" style="font-size:12px;font-weight:600">Route to queue</text>
+<text class="tx tx-muted" x="652" y="68" text-anchor="middle" style="font-size:10px">rules on the above</text>
+<line class="ln ln-neutral" x1="52" y1="250" x2="730" y2="250"/>
+<line class="ln ln-neutral" x1="52" y1="250" x2="52" y2="112"/>
+<line class="grid" x1="52" y1="185" x2="730" y2="185" style="stroke-width:1"/>
+<line class="grid" x1="52" y1="120" x2="730" y2="120" style="stroke-width:1"/>
+<text class="tx tx-muted" x="46" y="254" text-anchor="end" style="font-size:10px">80%</text>
+<text class="tx tx-muted" x="46" y="189" text-anchor="end" style="font-size:10px">90%</text>
+<text class="tx tx-muted" x="46" y="124" text-anchor="end" style="font-size:10px">100%</text>
+<line class="ln ln-risk dashed" x1="52" y1="217.5" x2="730" y2="217.5"/>
+<text class="tx tx-risk halo" x="297" y="213" text-anchor="middle" style="font-size:10px">today: 85%</text>
+<rect class="st st-data" x="54" y="214" width="60" height="36" rx="3"/>
+<text class="tx tx-muted" x="84" y="207" text-anchor="middle" style="font-size:10px">+0.5</text>
+<text class="tx tx-muted" x="84" y="266" text-anchor="middle" style="font-size:10px">85.5%</text>
+<rect class="st st-data" x="196" y="208" width="60" height="42" rx="3"/>
+<text class="tx tx-muted" x="226" y="201" text-anchor="middle" style="font-size:10px">+1</text>
+<text class="tx tx-muted" x="226" y="266" text-anchor="middle" style="font-size:10px">86.5%</text>
+<rect class="st st-data" x="338" y="178" width="60" height="72" rx="3"/>
+<text class="tx tx-muted" x="368" y="171" text-anchor="middle" style="font-size:10px">+4.5</text>
+<text class="tx tx-muted" x="368" y="266" text-anchor="middle" style="font-size:10px">91%</text>
+<rect class="st st-model" x="480" y="133" width="60" height="117" rx="3"/>
+<text class="tx tx-model" x="510" y="126" text-anchor="middle" style="font-size:11px;font-weight:700">+7 ← fix this first</text>
+<text class="tx tx-muted" x="510" y="266" text-anchor="middle" style="font-size:10px">98%</text>
+<rect class="st st-data" x="622" y="120" width="60" height="130" rx="3"/>
+<text class="tx tx-muted" x="652" y="113" text-anchor="middle" style="font-size:10px">+2</text>
+<text class="tx tx-muted" x="652" y="266" text-anchor="middle" style="font-size:10px">100%</text>
+<text class="tx tx-muted" x="390" y="288" text-anchor="middle" style="font-size:10px">whole-system accuracy after swapping in a perfect, hand-labelled output for each stage, cumulatively from the left</text>
+</svg></div><figcaption>Error analysis on a pipeline, Ng's method from CS229 lecture 12 applied to ticket routing. Each bar replaces one more stage with ground truth. The biggest jump names the bottleneck; a perfect language detector is worth one point, so a language-detection project is not worth funding.</figcaption></figure>
+<div class="tblwrap"><table><thead><tr><th>Ablative analysis: remove one component at a time</th><th>Accuracy</th><th>What it earned</th></tr></thead><tbody>
+<tr><td>Full anti-spam system (Ng's example from the CS229 advice slides)</td><td>99.9%</td><td></td></tr>
+<tr><td>Without spelling correction</td><td>99.0%</td><td>0.9 points</td></tr>
+<tr><td>Without sender-host features</td><td>98.9%</td><td>0.1</td></tr>
+<tr><td>Without email-header features</td><td>98.9%</td><td>0.0</td></tr>
+<tr><td>Without text-parser features</td><td>98.0%</td><td>0.9</td></tr>
+<tr><td>Without the JavaScript parser</td><td>94.5%</td><td>3.5</td></tr>
+<tr><td>Without image features (back to the plain baseline)</td><td>94.0%</td><td>0.5</td></tr>
+</tbody></table></div>
+<div class="notes"><span class="caps">Teaching notes</span>Give the learner a pipeline from their own product and ask which stage they would bet is the bottleneck. Then ask how they would test the bet in a week without building anything: label 100 to 200 examples per stage and swap them in. Most people bet on the wrong stage, which is the point.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Diagnosis is cheap and modelling is expensive. Ng's order of work: quick-and-dirty system first, error analysis second, investment third.</li><li>Error analysis gives a ceiling for each component. If a perfect stage moves the system by half a point, no project on that stage is worth funding.</li><li>Ablative analysis shows what a team's last six months actually contributed, and what can be deleted. Header features above earned nothing and still cost maintenance.</li><li>The most common finding is that the metric was wrong: the system optimised the number it was given and the number was not the product. See the helicopter test below.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Ng's <strong>helicopter diagnostic</strong> separates two failures that look identical from outside: the optimiser did not find a good solution, or it found a solution that is good by your objective and bad in reality. The test is to score a human expert's behaviour with your own cost function. If the human scores better than the model, the optimiser is failing (train longer, change the algorithm). If the model scores better than the human but flies worse, the <strong>objective is wrong</strong> and the fix is the metric, not the model. The same test applies to LLM evals and reward models: check whether the answer a human prefers scores higher under your rubric. Error analysis needs ground truth for intermediate stages, which means labelling a small sample per stage; 100 to 200 examples usually suffice. Read the misclassified examples by hand and tally them by cause; the histogram of causes is the roadmap. Lecture 20 applies the same three-way split to reinforcement learning: is it the simulator, the algorithm, or the reward function?</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>pipeline stage</strong> is one step that consumes the previous step's output. <strong>Ablation</strong> means removing one part and measuring the difference. <strong>Ground truth for a stage</strong> is the output a careful human would have produced at that step. An <strong>objective</strong> or <strong>cost function</strong> is the number the training process is told to optimise.</p></div></details>
+</div></section>
+<section class="lesson" id="mlops">
+<div class="lesson-head"><span class="num">10</span><h2>Shipping a model is shipping software plus a second pipeline for data and weights</h2></div>
+<p class="thesis">The model pipeline mirrors the code pipeline: data instead of commits, training instead of building, evaluation instead of tests, a registry instead of a release, and a retrain loop that code does not need. Teams that already run CI/CD well are most of the way there.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Two parallel pipelines: the code pipeline commit, build, test, deploy, monitor; the model pipeline data, train, evaluate, register, serve, monitor with a retrain loop" xmlns="http://www.w3.org/2000/svg">
+<rect class="fr fr-neutral" x="10" y="10" width="740" height="110" rx="14"/>
+<text class="tx tx-neutral caps" x="22" y="28" text-anchor="start" style="font-size:11px;font-weight:600">Software delivery (CI/CD)</text>
+<rect class="bx bx-human" x="30" y="50" width="120" height="46" rx="10"/>
+<text class="tx tx-human" x="90.0" y="77.32" text-anchor="middle" style="font-size:12px;font-weight:600">Commit</text>
+<line class="ln ln-neutral" x1="150" y1="73" x2="165.0" y2="73.0"/>
+<polygon class="ah ah-neutral" points="173.0,73.0 164.0,77.5 164.0,68.5"/>
+<rect class="bx bx-tool" x="175" y="50" width="120" height="46" rx="10"/>
+<text class="tx tx-tool" x="235.0" y="77.32" text-anchor="middle" style="font-size:12px;font-weight:600">Build</text>
+<line class="ln ln-neutral" x1="295" y1="73" x2="310.0" y2="73.0"/>
+<polygon class="ah ah-neutral" points="318.0,73.0 309.0,77.5 309.0,68.5"/>
+<rect class="bx bx-tool" x="320" y="50" width="120" height="46" rx="10"/>
+<text class="tx tx-tool" x="380.0" y="77.32" text-anchor="middle" style="font-size:12px;font-weight:600">Test</text>
+<line class="ln ln-neutral" x1="440" y1="73" x2="455.0" y2="73.0"/>
+<polygon class="ah ah-neutral" points="463.0,73.0 454.0,77.5 454.0,68.5"/>
+<rect class="bx bx-tool" x="465" y="50" width="120" height="46" rx="10"/>
+<text class="tx tx-tool" x="525.0" y="77.32" text-anchor="middle" style="font-size:12px;font-weight:600">Deploy</text>
+<line class="ln ln-neutral" x1="585" y1="73" x2="600.0" y2="73.0"/>
+<polygon class="ah ah-neutral" points="608.0,73.0 599.0,77.5 599.0,68.5"/>
+<rect class="bx bx-tool" x="610" y="50" width="120" height="46" rx="10"/>
+<text class="tx tx-tool" x="670.0" y="77.32" text-anchor="middle" style="font-size:12px;font-weight:600">Monitor</text>
+<rect class="fr fr-neutral" x="10" y="140" width="740" height="150" rx="14"/>
+<text class="tx tx-neutral caps" x="22" y="158" text-anchor="start" style="font-size:11px;font-weight:600">Model delivery (MLOps)</text>
+<rect class="bx bx-data" x="30" y="180" width="120" height="46" rx="10"/>
+<text class="tx tx-data" x="90.0" y="207.32" text-anchor="middle" style="font-size:12px;font-weight:600">Data</text>
+<line class="ln ln-neutral" x1="150" y1="203" x2="165.0" y2="203.0"/>
+<polygon class="ah ah-neutral" points="173.0,203.0 164.0,207.5 164.0,198.5"/>
+<rect class="bx bx-model" x="175" y="180" width="120" height="46" rx="10"/>
+<text class="tx tx-model" x="235.0" y="207.32" text-anchor="middle" style="font-size:12px;font-weight:600">Train</text>
+<line class="ln ln-neutral" x1="295" y1="203" x2="310.0" y2="203.0"/>
+<polygon class="ah ah-neutral" points="318.0,203.0 309.0,207.5 309.0,198.5"/>
+<rect class="bx bx-tool" x="320" y="180" width="120" height="46" rx="10"/>
+<text class="tx tx-tool" x="380.0" y="207.32" text-anchor="middle" style="font-size:12px;font-weight:600">Evaluate</text>
+<line class="ln ln-neutral" x1="440" y1="203" x2="455.0" y2="203.0"/>
+<polygon class="ah ah-neutral" points="463.0,203.0 454.0,207.5 454.0,198.5"/>
+<rect class="bx bx-tool" x="465" y="180" width="120" height="46" rx="10"/>
+<text class="tx tx-tool" x="525.0" y="207.32" text-anchor="middle" style="font-size:12px;font-weight:600">Register</text>
+<line class="ln ln-neutral" x1="585" y1="203" x2="600.0" y2="203.0"/>
+<polygon class="ah ah-neutral" points="608.0,203.0 599.0,207.5 599.0,198.5"/>
+<rect class="bx bx-tool" x="610" y="180" width="120" height="46" rx="10"/>
+<text class="tx tx-tool" x="670.0" y="207.32" text-anchor="middle" style="font-size:12px;font-weight:600">Serve</text>
+<polyline class="ln ln-model dashed" points="670,226 670,262 90,262 90.0,236.0" fill="none"/>
+<polygon class="ah ah-model" points="90.0,228.0 94.5,237.0 85.5,237.0"/>
+<text class="tx tx-muted halo" x="380" y="254" text-anchor="middle" style="font-size:11px">monitor → drift detected → retrain with fresh data</text>
+<line class="ln ln-neutral dashed" x1="670" y1="96" x2="670.0" y2="170.0"/>
+<polygon class="ah ah-neutral" points="670.0,178.0 665.5,169.0 674.5,169.0"/>
+<text class="tx tx-muted halo" x="670.0" y="107.0" text-anchor="middle" style="font-size:11px">same tools, same gates</text>
+</svg></div><figcaption>The top lane is ByteByteGo's CI/CD crash course in one line. The bottom lane adds what ML needs: versioned data, a model registry, and monitoring that can trigger retraining.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask what 'test' means for a model (an eval on held-out data plus checks on latency and fairness) and what 'rollback' means (the registry keeps the previous version). Then ask who is on call for a model that drifts at 2 a.m.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>The infrastructure investment is mostly reusable: pipelines, registries, and monitoring serve every model after the first.</li><li>Gates matter as much as speed. An eval that must pass before a model is registered is the ML equivalent of a failing test blocking a merge.</li><li>Plan the on-call. A model in production has failure modes (drift, latency, upstream data breaks) that need an owner.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Core components: a <strong>feature store</strong> (consistent feature definitions for training and serving), an <strong>experiment tracker</strong> (which data, code, and hyperparameters produced which metrics), a <strong>model registry</strong> (versioned artefacts with stage: staging, production, archived), a <strong>serving layer</strong> (batch scoring or a real-time endpoint), and <strong>monitoring</strong> (input drift, prediction drift, latency, and outcome metrics when labels arrive). Rollouts use shadow mode (score but do not act), canaries, and A/B tests. From the CI/CD source: continuous integration automates build and test on every commit; continuous delivery keeps code deployable at all times; continuous deployment pushes every passing change to production automatically.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>CI/CD</strong> is continuous integration and continuous delivery or deployment: automation that builds, tests, and ships code on every change. A <strong>registry</strong> is a versioned store of built artefacts. <strong>On-call</strong> is the rota of people paged when production breaks.</p></div></details>
+</div></section>
+<section class="lesson" id="classical-vs-llm">
+<div class="lesson-head"><span class="num">11</span><h2>Three questions decide whether you need an LLM at all</h2></div>
+<p class="thesis">If the input is tabular, use classical ML. If it is language but the task is narrow and high-volume, a small tuned model is cheaper and faster. Reserve LLMs for open-ended work that needs judgement, and prototype with an LLM before deciding to specialise.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 320" role="img" aria-label="Decision flow with three questions leading to classical ML, a small fine-tuned model, or an LLM" xmlns="http://www.w3.org/2000/svg">
+<polygon class="bx bx-neutral" points="150,35.0 270.0,80 150,125.0 30.0,80"/>
+<text class="tx" x="150" y="76" text-anchor="middle" style="font-size:12px;font-weight:600">Is the input mostly</text>
+<text class="tx tx-muted" x="150" y="92" text-anchor="middle" style="font-size:11px">numbers in rows and columns?</text>
+<line class="ln ln-neutral" x1="270" y1="80" x2="322.0" y2="80.0"/>
+<polygon class="ah ah-neutral" points="330.0,80.0 321.0,84.5 321.0,75.5"/>
+<text class="tx tx-muted halo" x="300.0" y="74.0" text-anchor="middle" style="font-size:11px">yes</text>
+<rect class="bx bx-tool" x="332" y="56" width="150" height="48" rx="10"/>
+<text class="tx tx-tool" x="407.0" y="77.0" text-anchor="middle" style="font-size:12px;font-weight:600">Classical ML</text>
+<text class="tx tx-muted" x="407.0" y="93.0" text-anchor="middle" style="font-size:11px">boosting, regression</text>
+<line class="ln ln-neutral" x1="150" y1="125" x2="150.0" y2="157.0"/>
+<polygon class="ah ah-neutral" points="150.0,165.0 145.5,156.0 154.5,156.0"/>
+<text class="tx tx-muted halo" x="150.0" y="141.0" text-anchor="middle" style="font-size:11px">no</text>
+<text class="tx tx-muted" x="120" y="150" text-anchor="end" style="font-size:10px">text, images, audio</text>
+<polygon class="bx bx-neutral" points="150,165.0 270.0,210 150,255.0 30.0,210"/>
+<text class="tx" x="150" y="206" text-anchor="middle" style="font-size:12px;font-weight:600">Is the task narrow and</text>
+<text class="tx tx-muted" x="150" y="222" text-anchor="middle" style="font-size:11px">repeated millions of times?</text>
+<line class="ln ln-neutral" x1="270" y1="210" x2="322.0" y2="210.0"/>
+<polygon class="ah ah-neutral" points="330.0,210.0 321.0,214.5 321.0,205.5"/>
+<text class="tx tx-muted halo" x="300.0" y="204.0" text-anchor="middle" style="font-size:11px">yes</text>
+<rect class="bx bx-model" x="332" y="186" width="170" height="48" rx="10"/>
+<text class="tx tx-model" x="417.0" y="207.0" text-anchor="middle" style="font-size:12px;font-weight:600">Small tuned model</text>
+<text class="tx tx-muted" x="417.0" y="223.0" text-anchor="middle" style="font-size:11px">cheap, fast, specific</text>
+<line class="ln ln-neutral" x1="150" y1="255" x2="150.0" y2="282.0"/>
+<polygon class="ah ah-neutral" points="150.0,290.0 145.5,281.0 154.5,281.0"/>
+<text class="tx tx-muted halo" x="150.0" y="268.5" text-anchor="middle" style="font-size:11px">no</text>
+<rect class="bx bx-neutral" x="60" y="292" width="180" height="26" rx="10"/>
+<text class="tx tx-neutral" x="150.0" y="308.96" text-anchor="middle" style="font-size:11px">open-ended, needs judgement</text>
+<line class="ln ln-neutral" x1="240" y1="305" x2="322.0" y2="305.0"/>
+<polygon class="ah ah-neutral" points="330.0,305.0 321.0,309.5 321.0,300.5"/>
+<rect class="bx bx-model" x="332" y="281" width="170" height="48" rx="10"/>
+<text class="tx tx-model" x="417.0" y="302.0" text-anchor="middle" style="font-size:12px;font-weight:600">LLM</text>
+<text class="tx tx-muted" x="417.0" y="318.0" text-anchor="middle" style="font-size:11px">prompt, RAG, or agent</text>
+<text class="tx tx-muted" x="530" y="60" text-anchor="start" style="font-size:11px">Fraud scoring, demand</text>
+<text class="tx tx-muted" x="530" y="75" text-anchor="start" style="font-size:11px">forecasts, churn, pricing</text>
+<text class="tx tx-muted" x="530" y="190" text-anchor="start" style="font-size:11px">Ticket routing, sentiment,</text>
+<text class="tx tx-muted" x="530" y="205" text-anchor="start" style="font-size:11px">entity extraction at scale</text>
+<text class="tx tx-muted" x="530" y="285" text-anchor="start" style="font-size:11px">Drafting, summarising,</text>
+<text class="tx tx-muted" x="530" y="300" text-anchor="start" style="font-size:11px">answering, multi-step tasks</text>
+</svg></div><figcaption>The flow is a default, not a law. A common pattern is to prototype with an LLM to learn the task, then distil the narrow, high-volume part into a small model.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Run the learner's backlog through the three questions. Most items resolve in under a minute, and the exercise usually reveals one 'AI feature' that is really a rules feature.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>LLM cost at scale is the number that surprises finance. A narrow task at a million calls a day almost always wants a small model.</li><li>Prototype with the LLM anyway: it is the fastest way to learn what the task really needs before investing in a specialised model.</li><li>Mixed architectures are normal: an LLM for the conversation, classical models for the scores it consults.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>LLMs can act as zero-shot classifiers, which makes them ideal for prototyping and for labelling the data a small model later trains on (<strong>LLM-assisted labelling</strong>). Small language models (under ~10B parameters) fine-tuned on that data often match the LLM on the narrow task at a fraction of latency and cost (ByteByteGo's LLM vs SLM comparison). Embedding models plus a classifier are another cheap middle path for text. The decision should be revisited as prices fall.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>small language model</strong> is an LLM-style model with far fewer parameters, often run on modest hardware. <strong>Zero-shot</strong> means the model performs a task from an instruction alone with no examples. <strong>Entity extraction</strong> pulls names, dates, and amounts out of text.</p></div></details>
+</div></section>
+<section class="lesson" id="embeddings">
+<div class="lesson-head"><span class="num">12</span><h2>Embeddings turn meaning into coordinates, which turns search into geometry</h2></div>
+<p class="thesis">An embedding model maps text (or images, or products) to a point in a space with thousands of dimensions, arranged so that similar meanings are close together. Finding relevant documents becomes finding nearest neighbours, and that is the engine under RAG, semantic search, and recommendations.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 270" role="img" aria-label="Two-dimensional map of embedded words showing clusters of related terms and a query point with its nearest neighbours" xmlns="http://www.w3.org/2000/svg">
+<line class="ln ln-neutral" x1="60" y1="240" x2="720" y2="240"/>
+<line class="ln ln-neutral" x1="60" y1="240" x2="60" y2="30"/>
+<text class="tx tx-muted" x="390" y="262" text-anchor="middle" style="font-size:10px">dimension 1 (of thousands)</text>
+<text class="tx tx-muted" x="40" y="135" text-anchor="middle" style="font-size:10px">dim 2</text>
+<circle class="dt dt-model" cx="150" cy="90" r="6"/>
+<text class="tx" x="159" y="94" text-anchor="start" style="font-size:11px">king</text>
+<circle class="dt dt-model" cx="185" cy="70" r="6"/>
+<text class="tx" x="194" y="74" text-anchor="start" style="font-size:11px">queen</text>
+<circle class="dt dt-model" cx="215" cy="105" r="6"/>
+<text class="tx" x="224" y="109" text-anchor="start" style="font-size:11px">prince</text>
+<circle class="dt dt-model" cx="250" cy="80" r="6"/>
+<text class="tx" x="259" y="84" text-anchor="start" style="font-size:11px">throne</text>
+<circle class="dt dt-data" cx="480" cy="180" r="6"/>
+<text class="tx" x="489" y="184" text-anchor="start" style="font-size:11px">coffee</text>
+<circle class="dt dt-data" cx="520" cy="160" r="6"/>
+<text class="tx" x="529" y="164" text-anchor="start" style="font-size:11px">tea</text>
+<circle class="dt dt-data" cx="505" cy="205" r="6"/>
+<text class="tx" x="514" y="209" text-anchor="start" style="font-size:11px">latte</text>
+<circle class="dt dt-data" cx="555" cy="190" r="6"/>
+<text class="tx" x="564" y="194" text-anchor="start" style="font-size:11px">espresso</text>
+<circle class="dt dt-tool" cx="360" cy="60" r="6"/>
+<text class="tx" x="369" y="64" text-anchor="start" style="font-size:11px">invoice</text>
+<circle class="dt dt-tool" cx="395" cy="85" r="6"/>
+<text class="tx" x="404" y="89" text-anchor="start" style="font-size:11px">receipt</text>
+<circle class="dt dt-tool" cx="420" cy="55" r="6"/>
+<text class="tx" x="429" y="59" text-anchor="start" style="font-size:11px">payment</text>
+<circle class="dt dt-human" cx="470" cy="150" r="7"/>
+<text class="tx tx-human" x="470" y="138" text-anchor="middle" style="font-size:11px;font-weight:600">&#x27;hot drink&#x27;</text>
+<circle class="fr fr-human" cx="500" cy="180" r="62"/>
+<text class="tx tx-muted" x="600" y="120" text-anchor="start" style="font-size:11px">nearest neighbours =</text>
+<text class="tx tx-muted" x="600" y="135" text-anchor="start" style="font-size:11px">the retrieval step in RAG</text>
+<text class="tx" x="200" y="200" text-anchor="middle" style="font-size:11px;font-weight:600">similar meaning → nearby points</text>
+</svg></div><figcaption>A two-dimensional cartoon of a space that really has a thousand or more dimensions. The dashed circle is a nearest-neighbour query: the retrieval step from Module 1's RAG diagram.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Connect this back to RAG explicitly: the vector store holds these points for every passage, and a question becomes a point whose neighbours are the passages to show the model. Ask what happens when two documents say the same thing in different words (they land close together, which keyword search misses).</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Embeddings are cheap and reusable: one embedding pipeline powers search, deduplication, clustering, and recommendations.</li><li>Retrieval quality is mostly embedding quality plus chunking. Evaluate retrieval separately from generation.</li><li>Embedding models are swappable, but switching one means re-embedding everything; plan the migration.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Embedding models are trained so that texts with similar meaning have high <strong>cosine similarity</strong>. <strong>Approximate nearest-neighbour</strong> indexes (HNSW and similar) make search fast at millions of vectors. Embeddings of different types can share a space (CLIP puts images and captions together), enabling image search by text. <strong>Hybrid search</strong> combines vectors with keyword scoring so exact terms (product codes, names) still match. Evaluate with recall@k: for known question-passage pairs, how often is the right passage in the top k results?</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>dimension</strong> is one axis of a space; the picture has two, real embeddings have hundreds or thousands. <strong>Nearest neighbour</strong> means the stored point with the smallest distance to the query point. <strong>Semantic search</strong> finds by meaning rather than by matching words.</p></div></details>
+</div></section>
+<section class="lesson" id="knobs">
+<div class="lesson-head"><span class="num">13</span><h2>Inference cost is a set of knobs, and half of them cost you no quality at all</h2></div>
+<p class="thesis">Smaller, quantised, or distilled models trade a little quality for a lot of speed and cost. Caching, batching, and speculative decoding keep outputs identical and still cut the bill. Know which knob your team turned before you accept a quality regression.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Matrix of inference optimisation techniques against their effect on quality, latency, and cost" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="330" y="36" text-anchor="middle" style="font-size:12px;font-weight:600">Quality</text>
+<text class="tx tx-muted caps" x="460" y="36" text-anchor="middle" style="font-size:12px;font-weight:600">Latency</text>
+<text class="tx tx-muted caps" x="590" y="36" text-anchor="middle" style="font-size:12px;font-weight:600">Cost</text>
+<rect class="bx bx-tool" x="20" y="56" width="260" height="30" rx="10"/>
+<text class="tx tx-tool" x="150.0" y="75.32" text-anchor="middle" style="font-size:12px">Use a smaller model</text>
+<text class="tx tx-tool" x="330" y="76" text-anchor="middle" style="font-size:12px;font-weight:600">↓ slightly</text>
+<text class="tx tx-tool" x="460" y="76" text-anchor="middle" style="font-size:12px;font-weight:600">↓↓</text>
+<text class="tx tx-tool" x="590" y="76" text-anchor="middle" style="font-size:12px;font-weight:600">↓↓</text>
+<rect class="bx bx-tool" x="20" y="94" width="260" height="30" rx="10"/>
+<text class="tx tx-tool" x="150.0" y="113.32" text-anchor="middle" style="font-size:12px">Quantise weights (8- or 4-bit)</text>
+<text class="tx tx-tool" x="330" y="114" text-anchor="middle" style="font-size:12px;font-weight:600">↓ tiny</text>
+<text class="tx tx-tool" x="460" y="114" text-anchor="middle" style="font-size:12px;font-weight:600">↓</text>
+<text class="tx tx-tool" x="590" y="114" text-anchor="middle" style="font-size:12px;font-weight:600">↓</text>
+<rect class="bx bx-model" x="20" y="132" width="260" height="30" rx="10"/>
+<text class="tx tx-model" x="150.0" y="151.32" text-anchor="middle" style="font-size:12px">Distil into a student model</text>
+<text class="tx tx-tool" x="330" y="152" text-anchor="middle" style="font-size:12px;font-weight:600">↓ some</text>
+<text class="tx tx-tool" x="460" y="152" text-anchor="middle" style="font-size:12px;font-weight:600">↓↓</text>
+<text class="tx tx-tool" x="590" y="152" text-anchor="middle" style="font-size:12px;font-weight:600">↓↓</text>
+<rect class="bx bx-data" x="20" y="170" width="260" height="30" rx="10"/>
+<text class="tx tx-data" x="150.0" y="189.32" text-anchor="middle" style="font-size:12px">Cache repeated prompt prefixes</text>
+<text class="tx tx-muted" x="330" y="190" text-anchor="middle" style="font-size:12px;font-weight:600">=</text>
+<text class="tx tx-tool" x="460" y="190" text-anchor="middle" style="font-size:12px;font-weight:600">↓</text>
+<text class="tx tx-tool" x="590" y="190" text-anchor="middle" style="font-size:12px;font-weight:600">↓</text>
+<rect class="bx bx-tool" x="20" y="208" width="260" height="30" rx="10"/>
+<text class="tx tx-tool" x="150.0" y="227.32" text-anchor="middle" style="font-size:12px">Batch many requests</text>
+<text class="tx tx-muted" x="330" y="228" text-anchor="middle" style="font-size:12px;font-weight:600">=</text>
+<text class="tx tx-risk" x="460" y="228" text-anchor="middle" style="font-size:12px;font-weight:600">↑ per request</text>
+<text class="tx tx-tool" x="590" y="228" text-anchor="middle" style="font-size:12px;font-weight:600">↓↓</text>
+<rect class="bx bx-model" x="20" y="246" width="260" height="30" rx="10"/>
+<text class="tx tx-model" x="150.0" y="265.32" text-anchor="middle" style="font-size:12px">Speculative decoding</text>
+<text class="tx tx-muted" x="330" y="266" text-anchor="middle" style="font-size:12px;font-weight:600">=</text>
+<text class="tx tx-tool" x="460" y="266" text-anchor="middle" style="font-size:12px;font-weight:600">↓</text>
+<text class="tx tx-muted" x="590" y="266" text-anchor="middle" style="font-size:12px;font-weight:600">=</text>
+<text class="tx tx-muted" x="380" y="292" text-anchor="middle" style="font-size:10px">green = improves for you, red = worsens, grey = unchanged; the first three change outputs, the last three do not</text>
+</svg></div><figcaption>From the Google LLM whitepaper's inference chapter: output-approximating techniques (top three) versus output-preserving ones (bottom three). Batching lowers cost per token by raising per-request latency, which suits offline jobs and not chat.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask which knobs are free (the bottom three) and why teams do not always use them (engineering effort, and batching hurts interactive latency). Then ask for the task-level eval before and after any of the top three.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Ask for output-preserving optimisations first; they are pure savings.</li><li>A quality drop from a smaller or quantised model is only real if your eval set says so. Benchmarks are not your task.</li><li>Interactive and batch workloads want different settings; separate them so batch jobs do not slow the chat product.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Prefix caching</strong> stores the computed attention state for a shared prompt prefix (your system prompt and few-shot examples) so only the new part is processed. <strong>Continuous batching</strong> fills the GPU with many sequences at different stages. <strong>Speculative decoding</strong> lets a small draft model propose several tokens that the large model verifies in one pass; outputs are identical to the large model alone. <strong>Flash attention</strong> reorganises the attention computation to use GPU memory more efficiently. <strong>Quantisation-aware training</strong> recovers most of the quality lost by low precision. Whitepaper example: a 2× speed-up for a 2% accuracy drop on a detection task, an acceptable trade in most products.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Precision</strong> here means how many bits store each number (32-bit float vs 8-bit integer), not the classification metric. <strong>Cache</strong> means keeping a computed result to reuse instead of recomputing. <strong>Batch</strong> means processing many items together.</p></div></details>
+</div></section>
+<section class="endsec" id="glossary"><h2>Glossary</h2><div class="gloss"><div><b>Feature</b>One input variable to a model.</div><div><b>Label</b>The known correct answer for a training example.</div><div><b>Loss</b>A number measuring how wrong the model is; training minimises it.</div><div><b>Gradient descent</b>The step-downhill procedure that adjusts weights during training.</div><div><b>Overfitting</b>Memorising the training data instead of learning the pattern.</div><div><b>Validation set</b>Data used to tune settings; test set is opened once at the end.</div><div><b>Leakage</b>Information from the answer or the future sneaking into training.</div><div><b>Drift</b>Production inputs or relationships moving away from the training data.</div><div><b>Precision</b>Of the things we flagged, the share that were right.</div><div><b>Recall</b>Of the real positives, the share we caught.</div><div><b>Threshold</b>The score above which the model says yes; a business decision.</div><div><b>Gradient boosting</b>Sequential trees that correct each other; the tabular workhorse.</div><div><b>Neural network</b>Layers of weighted sums with non-linear activations.</div><div><b>Embedding</b>A vector that encodes meaning so similar things are close.</div><div><b>Model registry</b>Versioned store of trained models with their stage and metrics.</div><div><b>Quantisation</b>Storing weights in fewer bits to cut memory and cost.</div><div><b>Bias (statistical)</b>Error from a model too simple to capture the pattern; more data does not fix it.</div><div><b>Variance</b>Error from sensitivity to the training sample; more data or regularisation fixes it.</div><div><b>Learning curve</b>Error plotted against training set size; the bias-vs-variance diagnostic.</div><div><b>Cross-validation</b>Rotating which slice of the data is held out, so small data can both train and validate.</div><div><b>Error analysis</b>Swapping each pipeline stage for ground truth to find the stage that caps accuracy.</div><div><b>Ablative analysis</b>Removing components one at a time to measure what each contributed.</div><div><b>Generative model</b>Learns what each class looks like (Naive Bayes); not the same sense as generative AI.</div><div><b>Reward function</b>The score a reinforcement-learning agent optimises; in product terms, the spec.</div></div></section>
+<section class="endsec" id="questions"><h2>Questions to ask your team</h2><ol class="qs"><li>What exactly is the target variable, and what decision does the prediction feed?</li><li>Where do the labels come from, how many do we have, and what does each new one cost?</li><li>Was the test set separated in time from training? Has anyone tuned against it?</li><li>What is the baseline, and by how much does the proposed model beat it?</li><li>Are we bias-limited or variance-limited? Show me the learning curve before we buy more data.</li><li>Which pipeline stage caps our accuracy? Have we swapped in ground truth for each stage and measured?</li><li>If a human expert's output scores worse on our metric than the model's does, is the metric wrong?</li><li>Show me the confusion matrix. What does each red cell cost us in dollars?</li><li>Who sets the threshold, and when was it last reviewed?</li><li>What is monitored in production, and what triggers a retrain?</li><li>Can we roll back to the previous model version in under an hour?</li><li>For the LLM parts: which knobs have we turned, and did evals change?</li></ol></section>
+<section class="endsec" id="reading"><h2>Reading list</h2><p style="color:var(--ink-2);font-size:14.5px">Items marked <b>OneDrive</b> are in Kalyan's Career folder.</p><ul class="reads"><li><b>Stanford CS229: Machine Learning, Andrew Ng (Autumn 2018)</b> — <a href="https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU">YouTube playlist</a>, 21 lectures of about 80 minutes each. The canonical university course under this module. For a product leader the three to watch in full are Lecture 1 (framing), Lecture 8 (bias, variance, data splits) and Lecture 12 (debugging and error analysis); the map below points the rest at the section they support. Lectures 13 to 19 (EM, factor analysis, ICA, control theory) are beyond what this module needs.</li><li><b>A Crash Course in CI/CD (ByteByteGo newsletter, Apr 2024)</b> — OneDrive · Technical Knowledge Base. The top lane of section 10.</li><li><b>Good Code vs. Bad Code (ByteByteGo newsletter, Feb 2024)</b> — OneDrive · Technical Knowledge Base. Why the model's surrounding code matters as much as the model.</li><li><b>Foundational Large Language Models & Text Generation (Google, 2025)</b> — OneDrive · AI/Google Gen AI 5 Day Course. Sections on training, fine-tuning, and the inference trade-offs behind section 13.</li><li><b>Understanding Database Types (Alex Xu)</b> — OneDrive · Technical Knowledge Base. Context for where vector stores fit among databases.</li><li><b>System Design Archive 2024 (Alex Xu LinkedIn posts)</b> — OneDrive · Career root. Includes the 'Data Pipelines Overview' and 'Machine Learning & Big Data' cheat sheets.</li><li><b>ByteByteGo: Large Language Models vs Small Language Models</b> — <a href="https://blog.bytebytego.com/p/large-language-models-vs-small-language">blog.bytebytego.com</a>. Section 11's middle branch.</li><li><b>ByteByteGo: How to Shrink a Language Model Without Making it Too Dumb</b> — <a href="https://blog.bytebytego.com/p/how-to-shrink-a-language-model-without-295">blog.bytebytego.com</a>. Quantisation and distillation, section 13.</li><li><b>ByteByteGo: How Large Language Models Learn</b> — <a href="https://blog.bytebytego.com/p/how-large-language-models-learn">blog.bytebytego.com</a>. Training, visually.</li></ul><div class="tblwrap"><table><thead><tr><th>Module section</th><th>CS229 lecture</th><th>Take from it</th></tr></thead><tbody><tr><td>01 Three kinds of learning</td><td><a href="https://www.youtube.com/watch?v=jGwO_UgTS7I">Lecture 1</a>, <a href="https://www.youtube.com/watch?v=nt63k3bfXS0">Lecture 5</a>, <a href="https://www.youtube.com/watch?v=YQA9lLdLig8">Lecture 16</a></td><td>Mitchell's T-E-P definition; generative vs discriminative; what an MDP is</td></tr><tr><td>03 What training is</td><td><a href="https://www.youtube.com/watch?v=4b4MUYve_U8">Lecture 2</a>, <a href="https://www.youtube.com/watch?v=het9HFqo1TQ">Lecture 3</a></td><td>Gradient descent on linear and logistic regression, batch vs stochastic</td></tr><tr><td>04 Bias vs variance</td><td><a href="https://www.youtube.com/watch?v=rjbkWSTjHzM">Lecture 8</a>, <a href="https://www.youtube.com/watch?v=iVOxMcumR4A">Learning theory section</a></td><td>Learning curves, regularisation, why parameters demand data</td></tr><tr><td>05 Data is the product</td><td><a href="https://www.youtube.com/watch?v=rjbkWSTjHzM">Lecture 8</a></td><td>Split sizes by data volume, k-fold cross-validation, feature selection</td></tr><tr><td>06 The model zoo</td><td><a href="https://www.youtube.com/watch?v=wr9gUr-eWdA">Lecture 9</a>, <a href="https://www.youtube.com/watch?v=lDwow4aOrtg">Lecture 6</a>, <a href="https://www.youtube.com/watch?v=8NYoQiRANpg">Lecture 7</a></td><td>Trees, bagging vs boosting; SVMs and kernels</td></tr><tr><td>07 Neural networks</td><td><a href="https://www.youtube.com/watch?v=MfIjxPh6Pys">Lecture 10</a>, <a href="https://www.youtube.com/watch?v=zUazLXZZA2U">Lecture 11</a></td><td>Layers and backprop; initialisation, normalisation, Adam</td></tr><tr><td>09 Diagnosing failures</td><td><a href="https://www.youtube.com/watch?v=ORrStCArmP4">Lecture 12</a>, <a href="https://www.youtube.com/watch?v=pLhPQynL0tY">Lecture 20</a></td><td>Error analysis, ablation, optimiser-vs-objective; RL diagnostics</td></tr><tr><td>Unsupervised toolkit (in 01)</td><td><a href="https://www.youtube.com/watch?v=rVfZHWTwXSA">Lecture 13</a>, <a href="https://www.youtube.com/watch?v=dyb_cFywuik">Lecture 15</a></td><td>k-means and mixtures; PCA</td></tr></tbody></table></div></section>
+</main>
+</div>
+<footer class="footer"><a href="ai-foundations.html">← Module 1: AI Foundations</a><a href="spec-driven-development.html">Module 3: Spec-Driven Development →</a></footer>
+</div>
+<script>
+(function(){
+  var root=document.documentElement;
+  var notes=document.getElementById('notes-toggle');
+  function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function save(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  if(notes){
+    if(load('vp-notes')==='on'){notes.checked=true;root.setAttribute('data-notes','on')}
+    notes.addEventListener('change',function(){root.setAttribute('data-notes',notes.checked?'on':'off');save('vp-notes',notes.checked?'on':'off')});
+  }
+  var all=document.querySelectorAll('details.disc');
+  var ex=document.getElementById('expand-all');
+  if(ex){ex.addEventListener('click',function(){var open=ex.getAttribute('data-open')!=='1';all.forEach(function(d){d.open=open});ex.setAttribute('data-open',open?'1':'0');ex.textContent=open?'Collapse all':'Expand all'})}
+  var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a});
+  if('IntersectionObserver' in window){
+    var cur=null;
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting){var a=map[e.target.id];if(a&&a!==cur){if(cur)cur.classList.remove('on');a.classList.add('on');cur=a;
+        if(window.innerWidth<=900&&a.scrollIntoView){try{a.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})}catch(x){}}}}});
+    },{rootMargin:'-20% 0px -65% 0px'});
+    Object.keys(map).forEach(function(id){var s=document.getElementById(id);if(s)io.observe(s)});
+  }
+})();
+</script>
+</body>
+</html>

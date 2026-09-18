@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="What a model actually is, how a chat assistant gets built, and the four ways you can turn one into a product. Every idea is a picture first; open the panels when you want the mechanics or a refresher on the underlying tech.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧠%3C/text%3E%3C/svg%3E">
+<title>AI Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#EBEFF4; --ink:#151A22; --ink-2:#4A5361; --ink-3:#7A8494; --line:#D5DBE4; --line-2:#E6EAF0;
+  --accent:#2A78D6; --accent-ink:#FFFFFF;
+  --data:#2A78D6;  --data-fill:#E2EDFA;
+  --model:#4A3AA7; --model-fill:#E8E5F6;
+  --human:#EB6834; --human-fill:#FBE7DE;
+  --tool:#1B9E6E;  --tool-fill:#DDF3E9;
+  --risk:#E34948;  --risk-fill:#FAE2E2;
+  --neutral:#6B7686; --neutral-fill:#ECEFF3;
+  --shadow:0 1px 2px rgba(21,26,34,.06),0 8px 24px -12px rgba(21,26,34,.18);
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding-block:0 48px;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.02;letter-spacing:-.02em}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:700;line-height:1.15}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.caps{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+
+/* masthead */
+.masthead{padding-block:36px 24px;border-bottom:1px solid var(--line);display:grid;gap:14px}
+.series{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.series .mod{color:var(--accent);font-weight:500}
+.lede{font-size:18px;color:var(--ink-2);max-width:62ch}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:6px}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;user-select:none}
+.switch input{appearance:none;width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(16px)}
+.btn{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink-3)}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink-2);align-items:center}
+.key .caps{margin-right:2px}
+.sw{display:inline-flex;align-items:center;gap:6px}
+.sw i{width:14px;height:14px;border-radius:4px;border:2px solid;display:inline-block}
+.sw-data i{border-color:var(--data);background:var(--data-fill)}
+.sw-model i{border-color:var(--model);background:var(--model-fill)}
+.sw-human i{border-color:var(--human);background:var(--human-fill)}
+.sw-tool i{border-color:var(--tool);background:var(--tool-fill)}
+.sw-risk i{border-color:var(--risk);background:var(--risk-fill)}
+.modlinks{display:flex;gap:8px;flex-wrap:wrap}
+.modlinks a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--ink-2);background:var(--surface)}
+.modlinks a[aria-current]{border-color:var(--accent);color:var(--accent);font-weight:600}
+
+/* layout */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;align-items:start;padding-top:28px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);font-size:14px;display:grid;gap:2px;max-height:calc(100vh - 32px);overflow:auto}
+.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-2);padding:6px 10px;border-radius:8px;border-left:2px solid transparent}
+.toc a .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);min-width:18px}
+.toc a:hover{background:var(--surface)}
+.toc a.on{color:var(--ink);font-weight:600;background:var(--surface);border-left-color:var(--accent)}
+.toc .grp{margin-top:10px}
+main{display:grid;gap:56px;min-width:0}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;gap:20px}
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;max-height:none;padding-block:8px;margin-inline:-16px;padding-inline:16px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface);font-size:13px}
+  .toc a.on{border-color:var(--accent)}
+  .toc .grp{margin-top:0}
+}
+
+/* lesson */
+.lesson{display:grid;gap:18px;scroll-margin-top:24px;min-width:0}
+.lesson-head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.num{font-family:var(--mono);font-size:13px;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:3px 7px;margin-top:4px}
+.thesis{font-family:var(--display);font-size:clamp(18px,2vw,21px);font-weight:500;line-height:1.35;color:var(--ink);max-width:60ch;border-left:3px solid var(--accent);padding-left:14px}
+figure.diagram{margin:0;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;box-shadow:var(--shadow)}
+figure.diagram .wrap{overflow-x:auto;min-width:0}
+figure.diagram svg{display:block;width:100%;height:auto;min-width:520px;max-width:100%;font-family:var(--body)}
+figcaption{font-size:14px;color:var(--ink-2);margin-top:10px;max-width:70ch}
+.notes{display:none;background:var(--human-fill);border:1px dashed var(--human);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--ink)}
+.notes .caps{color:var(--human);display:block;margin-bottom:4px}
+:root[data-notes="on"] .notes{display:block}
+details.disc{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+details.disc summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:10px}
+details.disc summary::-webkit-details-marker{display:none}
+details.disc summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(-45deg);transition:transform .15s;flex:none}
+details.disc[open] summary::before{transform:rotate(45deg)}
+details.disc .body{padding:0 16px 14px 32px;font-size:15px;color:var(--ink-2);display:grid;gap:10px}
+details.disc ul,details.disc ol{margin:0;padding-left:18px;display:grid;gap:6px}
+details.why summary::after{content:"Director view";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+details.deeper summary::after{content:"Mechanics";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--model)}
+details.basics summary::after{content:"From zero";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--tool)}
+.disc-row{display:grid;gap:10px}
+strong{color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.tblwrap{overflow-x:auto;min-width:0}
+
+/* end sections */
+.endsec{display:grid;gap:14px;scroll-margin-top:24px;min-width:0}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gloss div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink-2)}
+.gloss b{display:block;color:var(--ink);font-family:var(--display);font-size:15px}
+.qs{display:grid;gap:8px;padding-left:0;margin:0;list-style:none;counter-reset:q}
+.qs li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 44px;position:relative;font-size:15px}
+.qs li::before{counter-increment:q;content:counter(q);position:absolute;left:14px;top:10px;font-family:var(--mono);font-size:12px;color:var(--accent)}
+.reads{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.reads li{font-size:14.5px;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--line)}
+.reads b{color:var(--ink)}
+.footer{margin-top:56px;border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}
+.footer a{text-decoration:none;font-weight:600}
+
+/* diagram element classes (inline SVG picks up page tokens) */
+.dg .tx{fill:var(--ink)}
+.dg .tx-muted{fill:var(--ink-2)}
+.dg .tx-on{fill:#fff}
+.dg .tx-data{fill:var(--data)} .dg .tx-model{fill:var(--model)} .dg .tx-human{fill:var(--human)} .dg .tx-tool{fill:var(--tool)} .dg .tx-risk{fill:var(--risk)} .dg .tx-neutral{fill:var(--ink-2)}
+.dg .caps{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.dg .halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.dg .bx{stroke-width:1.6}
+.dg .bx-data{fill:var(--data-fill);stroke:var(--data)} .dg .bx-model{fill:var(--model-fill);stroke:var(--model)} .dg .bx-human{fill:var(--human-fill);stroke:var(--human)} .dg .bx-tool{fill:var(--tool-fill);stroke:var(--tool)} .dg .bx-risk{fill:var(--risk-fill);stroke:var(--risk)} .dg .bx-neutral{fill:var(--neutral-fill);stroke:var(--neutral)}
+.dg .dashed{stroke-dasharray:5 4}
+.dg .fr{fill:none;stroke-width:1.2;stroke-dasharray:4 4}
+.dg .fr-data{stroke:var(--data)} .dg .fr-model{stroke:var(--model)} .dg .fr-human{stroke:var(--human)} .dg .fr-tool{stroke:var(--tool)} .dg .fr-risk{stroke:var(--risk)} .dg .fr-neutral{stroke:var(--line)}
+.dg .st{stroke:none} .dg .st-data{fill:var(--data)} .dg .st-model{fill:var(--model)} .dg .st-human{fill:var(--human)} .dg .st-tool{fill:var(--tool)} .dg .st-risk{fill:var(--risk)} .dg .st-neutral{fill:var(--neutral)}
+.dg .dt{stroke:var(--surface);stroke-width:2} .dg .dt-data{fill:var(--data)} .dg .dt-model{fill:var(--model)} .dg .dt-human{fill:var(--human)} .dg .dt-tool{fill:var(--tool)} .dg .dt-risk{fill:var(--risk)} .dg .dt-neutral{fill:var(--neutral)}
+.dg .ln{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dg .ln-neutral{stroke:var(--ink-2)} .dg .ln-data{stroke:var(--data)} .dg .ln-model{stroke:var(--model)} .dg .ln-human{stroke:var(--human)} .dg .ln-tool{stroke:var(--tool)} .dg .ln-risk{stroke:var(--risk)} .dg .ln-faint{stroke:var(--line)}
+.dg .fl{stroke:none} .dg .fl.ln-data{fill:var(--data-fill)} .dg .fl.ln-model{fill:var(--model-fill)} .dg .fl.ln-neutral{fill:var(--neutral-fill)} .dg .fl.ln-risk{fill:var(--risk-fill)} .dg .fl.ln-tool{fill:var(--tool-fill)} .dg .fl.ln-human{fill:var(--human-fill)}
+.dg .ah{stroke:none} .dg .ah-neutral{fill:var(--ink-2)} .dg .ah-data{fill:var(--data)} .dg .ah-model{fill:var(--model)} .dg .ah-human{fill:var(--human)} .dg .ah-tool{fill:var(--tool)} .dg .ah-risk{fill:var(--risk)}
+.dg .bar{fill:var(--data)} .dg .grid{stroke:var(--line-2)}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="masthead">
+  <div class="series"><span>Visual primers for product leaders</span><span>·</span><span class="mod">Module 1 of 4</span></div>
+  <h1>AI Foundations</h1>
+  <p class="lede">What a model actually is, how a chat assistant gets built, and the four ways you can turn one into a product. Every idea is a picture first; open the panels when you want the mechanics or a refresher on the underlying tech.</p>
+  <div class="modlinks"><a href="./">← All modules</a><a href="ai-foundations.html" aria-current="page">1. AI Foundations</a><a href="ml-fundamentals.html">2. ML Fundamentals</a><a href="spec-driven-development.html">3. Spec-Driven Development</a><a href="agentic-ai.html">4. Agentic AI</a></div>
+  <div class="toolbar">
+    <label class="switch"><input type="checkbox" id="notes-toggle"> Teaching notes</label>
+    <button class="btn" id="expand-all" type="button">Expand all</button>
+    <div class="key"><span class="caps">Colour key</span><span class="sw sw-data"><i></i>Data</span><span class="sw sw-model"><i></i>Model / compute</span><span class="sw sw-human"><i></i>People</span><span class="sw sw-tool"><i></i>Tools &amp; systems</span><span class="sw sw-risk"><i></i>Risk</span></div>
+  </div>
+</header>
+<div class="layout">
+<nav class="toc" aria-label="Sections"><a href="#landscape"><span class="n">01</span><span>The landscape</span></a><a href="#rules-vs-learning"><span class="n">02</span><span>Rules vs learning</span></a><a href="#how-llms-answer"><span class="n">03</span><span>How an LLM answers</span></a><a href="#how-chat-is-built"><span class="n">04</span><span>How a chatbot is built</span></a><a href="#model-menu"><span class="n">05</span><span>Choosing a model</span></a><a href="#build-ladder"><span class="n">06</span><span>The build ladder</span></a><a href="#rag"><span class="n">07</span><span>RAG</span></a><a href="#agents"><span class="n">08</span><span>Agents</span></a><a href="#prompting"><span class="n">09</span><span>Prompting</span></a><a href="#risks"><span class="n">10</span><span>Failure modes</span></a><a href="#value"><span class="n">11</span><span>Where value shows up</span></a><a href="#evals"><span class="n">12</span><span>AI product sense</span></a><a class="grp" href="#glossary"><span class="n">G</span><span>Glossary</span></a><a href="#questions"><span class="n">Q</span><span>Questions to ask</span></a><a href="#reading"><span class="n">R</span><span>Reading list</span></a></nav>
+<main>
+<section class="lesson" id="landscape">
+<div class="lesson-head"><span class="num">01</span><h2>AI is a set of nested rings, and today's excitement lives in the two innermost</h2></div>
+<p class="thesis">When someone says 'AI' in a product meeting, they almost always mean a large language model or another generative model. Knowing which ring you are in tells you what is possible, what it costs, and who you need.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Five nested rings: AI contains machine learning, which contains deep learning, which contains generative AI, which contains large language models" xmlns="http://www.w3.org/2000/svg">
+<rect class="fr fr-neutral" x="16" y="16" width="450" height="268" rx="14"/>
+<text class="tx tx-neutral caps" x="28" y="34" text-anchor="start" style="font-size:11px;font-weight:600">Artificial intelligence</text>
+<text class="tx tx-muted" x="30" y="50" text-anchor="start" style="font-size:11px">any software that does something we&#x27;d call &#x27;smart&#x27;</text>
+<rect class="bx bx-data" x="46" y="60" width="390" height="210" rx="14"/>
+<text class="tx tx-data" x="241.0" y="169.68" text-anchor="middle" style="font-size:13px;font-weight:600"></text>
+<text class="tx tx-data caps" x="60" y="82" text-anchor="start" style="font-size:11px;font-weight:600">MACHINE LEARNING</text>
+<text class="tx tx-muted" x="60" y="97" text-anchor="start" style="font-size:11px">learns rules from data instead of being told them</text>
+<rect class="bx bx-model" x="76" y="106" width="330" height="150" rx="12"/>
+<text class="tx tx-model" x="241.0" y="185.68" text-anchor="middle" style="font-size:13px;font-weight:600"></text>
+<text class="tx tx-model caps" x="90" y="128" text-anchor="start" style="font-size:11px;font-weight:600">DEEP LEARNING</text>
+<text class="tx tx-muted" x="90" y="143" text-anchor="start" style="font-size:11px">many-layered neural networks</text>
+<rect class="bx bx-model" x="106" y="152" width="270" height="90" rx="10"/>
+<text class="tx tx-model" x="241.0" y="201.68" text-anchor="middle" style="font-size:13px;font-weight:600"></text>
+<text class="tx tx-model caps" x="120" y="174" text-anchor="start" style="font-size:11px;font-weight:600">GENERATIVE AI</text>
+<text class="tx tx-muted" x="120" y="189" text-anchor="start" style="font-size:11px">produces new text, images, code, audio</text>
+<rect class="bx bx-model" x="136" y="200" width="210" height="32" rx="8"/>
+<text class="tx tx-model" x="241.0" y="220.68" text-anchor="middle" style="font-size:13px;font-weight:600">Large language models</text>
+<text class="tx tx-muted caps" x="500" y="42" text-anchor="start" style="font-size:11px;font-weight:600">Examples at each ring</text>
+<text class="tx tx" x="500" y="66" text-anchor="start" style="font-size:11px">AI: rules engines, route planning, chess</text>
+<text class="tx tx-data" x="500" y="90" text-anchor="start" style="font-size:11px">ML: fraud scores, recommendations,</text>
+<text class="tx tx-data" x="500" y="105" text-anchor="start" style="font-size:11px">demand forecasts</text>
+<text class="tx tx-model" x="500" y="128" text-anchor="start" style="font-size:11px">Deep learning: face recognition, speech-</text>
+<text class="tx tx-model" x="500" y="143" text-anchor="start" style="font-size:11px">to-text, self-driving perception</text>
+<text class="tx tx-model" x="500" y="166" text-anchor="start" style="font-size:11px">GenAI: image generation, code assistants,</text>
+<text class="tx tx-model" x="500" y="181" text-anchor="start" style="font-size:11px">synthetic voices</text>
+<text class="tx tx-model" x="500" y="204" text-anchor="start" style="font-size:11px">LLMs: ChatGPT, Claude, Gemini, Llama</text>
+<text class="tx tx-muted" x="500" y="250" text-anchor="start" style="font-size:11px">Most &#x27;AI&#x27; conversations in 2026 mean the two</text>
+<text class="tx tx-muted" x="500" y="265" text-anchor="start" style="font-size:11px">innermost rings.</text>
+</svg></div><figcaption>Each inner ring is a special case of the one outside it. Classical ML still runs most fraud, ranking, and forecasting systems; LLMs are the newest and most expensive ring.</figcaption></figure>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 128" role="img" aria-label="Timeline of generative AI milestones from 2017 to 2026" xmlns="http://www.w3.org/2000/svg">
+<line class="ln ln-faint" x1="30" y1="64" x2="730" y2="64" style="stroke-width:2"/>
+<circle class="dt dt-model" cx="62" cy="64" r="6"/>
+<text class="tx" x="62" y="42" text-anchor="middle" style="font-size:11px;font-weight:700">2017</text>
+<text class="tx tx-muted" x="62" y="28" text-anchor="middle" style="font-size:10px">Transformer paper</text>
+<circle class="dt dt-data" cx="152" cy="64" r="6"/>
+<text class="tx" x="152" y="100" text-anchor="middle" style="font-size:11px;font-weight:700">2019</text>
+<text class="tx tx-muted" x="152" y="114" text-anchor="middle" style="font-size:10px">GPT-2, GANs go mainstream</text>
+<circle class="dt dt-model" cx="242" cy="64" r="6"/>
+<text class="tx" x="242" y="42" text-anchor="middle" style="font-size:11px;font-weight:700">2020</text>
+<text class="tx tx-muted" x="242" y="28" text-anchor="middle" style="font-size:10px">GPT-3: prompting works</text>
+<circle class="dt dt-data" cx="332" cy="64" r="6"/>
+<text class="tx" x="332" y="100" text-anchor="middle" style="font-size:11px;font-weight:700">2022</text>
+<text class="tx tx-muted" x="332" y="114" text-anchor="middle" style="font-size:10px">ChatGPT launches</text>
+<circle class="dt dt-model" cx="422" cy="64" r="6"/>
+<text class="tx" x="422" y="42" text-anchor="middle" style="font-size:11px;font-weight:700">2023</text>
+<text class="tx tx-muted" x="422" y="28" text-anchor="middle" style="font-size:10px">GPT-4, open-weight Llama</text>
+<circle class="dt dt-data" cx="512" cy="64" r="6"/>
+<text class="tx" x="512" y="100" text-anchor="middle" style="font-size:11px;font-weight:700">2024</text>
+<text class="tx tx-muted" x="512" y="114" text-anchor="middle" style="font-size:10px">Multimodal + reasoning models</text>
+<circle class="dt dt-model" cx="602" cy="64" r="6"/>
+<text class="tx" x="602" y="42" text-anchor="middle" style="font-size:11px;font-weight:700">2025</text>
+<text class="tx tx-muted" x="602" y="28" text-anchor="middle" style="font-size:10px">Agents and MCP take off</text>
+<circle class="dt dt-data" cx="692" cy="64" r="6"/>
+<text class="tx" x="692" y="100" text-anchor="middle" style="font-size:11px;font-weight:700">2026</text>
+<text class="tx tx-muted" x="692" y="114" text-anchor="middle" style="font-size:10px">Agentic workflows at scale</text>
+</svg></div><figcaption>The milestones that moved AI from research to product. The 2017 transformer architecture is the ancestor of every model on the right (timeline compiled from the CB Insights GenAI trend reports and public releases).</figcaption></figure>
+<div class="notes"><span class="caps">Teaching notes</span>Start by asking the learner which ring their favourite product feature lives in. Point out that recommendations at Netflix are ML but not GenAI, and that a chatbot is an LLM product. Use the timeline to show how recent the innermost ring is: the transformer is younger than the iPhone.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Vendors sell 'AI' at every ring; the price and the risk profile differ by an order of magnitude between a fraud model and an LLM agent.</li><li>Hiring follows the ring: a data scientist for classical ML, an ML engineer for deep learning, an AI engineer for LLM products.</li><li>The outer rings are mature and boring in a good way. The inner ring is changing every quarter, so roadmaps there need shorter bets.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Machine learning</strong> fits a function to data. <strong>Deep learning</strong> uses neural networks with many layers so the function can be very complex. <strong>Generative AI</strong> is deep learning trained to produce outputs in the same form as its inputs (text in, text out). <strong>LLMs</strong> are generative models trained on text, built on the transformer architecture from 2017; their defining trick is predicting the next token so well that useful behaviour emerges.</p><p>Diffusion models (images), speech models, and multimodal models sit in the GenAI ring beside LLMs. Since 2024 most frontier models are multimodal: one model reads text, images, and audio.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>A model</strong> is a file of numbers (parameters) plus the code to run them. <strong>Training</strong> sets those numbers using data. <strong>Inference</strong> is running the finished model to get an answer. Everything in this module is one of those two activities.</p></div></details>
+</div></section>
+<section class="lesson" id="rules-vs-learning">
+<div class="lesson-head"><span class="num">02</span><h2>Machine learning flips the direction of programming</h2></div>
+<p class="thesis">Instead of a person writing the rules, you show the computer examples and correct answers, and training discovers the rules. The output of training is the model, which then runs like ordinary software.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 240" role="img" aria-label="Traditional programming turns rules plus data into answers; machine learning turns data plus answers into rules" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="20" y="38" text-anchor="start" style="font-size:11px;font-weight:600">Traditional software</text>
+<rect class="bx bx-human" x="20" y="50" width="130" height="48" rx="10"/>
+<text class="tx tx-human" x="85.0" y="71.0" text-anchor="middle" style="font-size:13px;font-weight:600">Rules</text>
+<text class="tx tx-muted" x="85.0" y="87.0" text-anchor="middle" style="font-size:11px">written by people</text>
+<rect class="bx bx-data" x="170" y="50" width="110" height="48" rx="10"/>
+<text class="tx tx-data" x="225.0" y="78.68" text-anchor="middle" style="font-size:13px;font-weight:600">Data</text>
+<rect class="bx bx-tool" x="330" y="50" width="150" height="48" rx="10"/>
+<text class="tx tx-tool" x="405.0" y="78.68" text-anchor="middle" style="font-size:13px;font-weight:600">Program runs</text>
+<rect class="bx bx-neutral" x="540" y="50" width="130" height="48" rx="10"/>
+<text class="tx tx-neutral" x="605.0" y="78.68" text-anchor="middle" style="font-size:13px;font-weight:600">Answers</text>
+<line class="ln ln-neutral" x1="150" y1="74" x2="160.0" y2="74.0"/>
+<polygon class="ah ah-neutral" points="168.0,74.0 159.0,78.5 159.0,69.5"/>
+<line class="ln ln-neutral" x1="280" y1="74" x2="320.0" y2="74.0"/>
+<polygon class="ah ah-neutral" points="328.0,74.0 319.0,78.5 319.0,69.5"/>
+<line class="ln ln-neutral" x1="480" y1="74" x2="530.0" y2="74.0"/>
+<polygon class="ah ah-neutral" points="538.0,74.0 529.0,78.5 529.0,69.5"/>
+<text class="tx tx-muted caps" x="20" y="148" text-anchor="start" style="font-size:11px;font-weight:600">Machine learning</text>
+<rect class="bx bx-data" x="20" y="160" width="130" height="48" rx="10"/>
+<text class="tx tx-data" x="85.0" y="181.0" text-anchor="middle" style="font-size:13px;font-weight:600">Data</text>
+<text class="tx tx-muted" x="85.0" y="197.0" text-anchor="middle" style="font-size:11px">examples</text>
+<rect class="bx bx-data" x="170" y="160" width="110" height="48" rx="10"/>
+<text class="tx tx-data" x="225.0" y="181.0" text-anchor="middle" style="font-size:13px;font-weight:600">Answers</text>
+<text class="tx tx-muted" x="225.0" y="197.0" text-anchor="middle" style="font-size:11px">labels</text>
+<rect class="bx bx-model" x="330" y="160" width="150" height="48" rx="10"/>
+<text class="tx tx-model" x="405.0" y="181.0" text-anchor="middle" style="font-size:13px;font-weight:600">Training</text>
+<text class="tx tx-muted" x="405.0" y="197.0" text-anchor="middle" style="font-size:11px">finds the pattern</text>
+<rect class="bx bx-model" x="540" y="160" width="130" height="48" rx="10"/>
+<text class="tx tx-model" x="605.0" y="181.0" text-anchor="middle" style="font-size:13px;font-weight:600">Rules</text>
+<text class="tx tx-muted" x="605.0" y="197.0" text-anchor="middle" style="font-size:11px">= the model</text>
+<line class="ln ln-neutral" x1="150" y1="184" x2="160.0" y2="184.0"/>
+<polygon class="ah ah-neutral" points="168.0,184.0 159.0,188.5 159.0,179.5"/>
+<line class="ln ln-neutral" x1="280" y1="184" x2="320.0" y2="184.0"/>
+<polygon class="ah ah-neutral" points="328.0,184.0 319.0,188.5 319.0,179.5"/>
+<line class="ln ln-neutral" x1="480" y1="184" x2="530.0" y2="184.0"/>
+<polygon class="ah ah-neutral" points="538.0,184.0 529.0,188.5 529.0,179.5"/>
+<polyline class="ln ln-model dashed" points="605,160 605,128 405,128 405.0,108.0" fill="none"/>
+<polygon class="ah ah-model" points="405.0,100.0 409.5,109.0 400.5,109.0"/>
+<text class="tx tx-muted halo" x="505" y="122" text-anchor="middle" style="font-size:11px">the model then runs like a program</text>
+</svg></div><figcaption>Top row: the way software has always worked. Bottom row: the inputs and outputs swap places, and the discovered rules become the model you deploy.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Use a concrete pair: spam filtering by keyword rules versus spam filtering by 10,000 labelled emails. Ask what happens when spammers change tactics in each approach (rules go stale; the model can be retrained).</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Your leverage moves from writing requirements to curating examples. The quality of the data set is the product decision.</li><li>Rules are explainable and cheap to change; learned models are more capable but need evaluation, monitoring, and retraining budgets.</li><li>Many 'AI features' should still be rules. Ask whether the problem has a pattern people cannot write down; if they can write it down, write it down.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Training is an optimisation: pick the parameters that make the model's outputs closest to the labelled answers, measured by a <strong>loss function</strong>. Module 2 shows the loop. The key consequence is that a model is only as good as the examples: if the labels are biased, late, or from a different population than production, the learned rules are wrong in ways nobody wrote down.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>label</strong> is the correct answer attached to an example (this email is spam). <strong>Structured data</strong> is rows and columns; <strong>unstructured data</strong> is text, images, and audio. Classical ML thrives on structured data; deep learning made unstructured data tractable.</p></div></details>
+</div></section>
+<section class="lesson" id="how-llms-answer">
+<div class="lesson-head"><span class="num">03</span><h2>An LLM writes one token at a time by predicting what comes next</h2></div>
+<p class="thesis">The model never 'knows' the answer up front. It turns your prompt into numbers, runs them through stacked attention layers, gets a probability for every possible next token, picks one, and repeats. Everything surprising about LLMs follows from that loop.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 270" role="img" aria-label="Pipeline from prompt to tokens to embeddings through transformer layers to next-token probabilities and sampling, looping until done" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="16" y="90" width="100" height="56" rx="10"/>
+<text class="tx tx-human" x="66.0" y="115.0" text-anchor="middle" style="font-size:13px;font-weight:600">Prompt</text>
+<text class="tx tx-muted" x="66.0" y="131.0" text-anchor="middle" style="font-size:11px">your text</text>
+<rect class="bx bx-data" x="136" y="90" width="100" height="56" rx="10"/>
+<text class="tx tx-data" x="186.0" y="115.0" text-anchor="middle" style="font-size:13px;font-weight:600">Tokens</text>
+<text class="tx tx-muted" x="186.0" y="131.0" text-anchor="middle" style="font-size:11px">word pieces</text>
+<rect class="bx bx-data" x="256" y="90" width="110" height="56" rx="10"/>
+<text class="tx tx-data" x="311.0" y="115.0" text-anchor="middle" style="font-size:13px;font-weight:600">Embeddings</text>
+<text class="tx tx-muted" x="311.0" y="131.0" text-anchor="middle" style="font-size:11px">numbers</text>
+<rect class="bx bx-model" x="386" y="70" width="150" height="96" rx="10"/>
+<text class="tx tx-model" x="461.0" y="115.0" text-anchor="middle" style="font-size:13px;font-weight:600">Transformer</text>
+<text class="tx tx-muted" x="461.0" y="131.0" text-anchor="middle" style="font-size:11px">N stacked layers</text>
+<text class="tx tx-muted" x="461" y="148" text-anchor="middle" style="font-size:10px">attention: every token</text>
+<text class="tx tx-muted" x="461" y="160" text-anchor="middle" style="font-size:10px">looks at every other</text>
+<rect class="bx bx-model" x="556" y="90" width="110" height="56" rx="10"/>
+<text class="tx tx-model" x="611.0" y="115.0" text-anchor="middle" style="font-size:13px;font-weight:600">Probabilities</text>
+<text class="tx tx-muted" x="611.0" y="131.0" text-anchor="middle" style="font-size:11px">for next token</text>
+<rect class="bx bx-tool" x="686" y="90" width="60" height="56" rx="10"/>
+<text class="tx tx-tool" x="716.0" y="115.0" text-anchor="middle" style="font-size:13px;font-weight:600">Pick</text>
+<text class="tx tx-muted" x="716.0" y="131.0" text-anchor="middle" style="font-size:11px">sample</text>
+<line class="ln ln-neutral" x1="116" y1="118" x2="126.0" y2="118.0"/>
+<polygon class="ah ah-neutral" points="134.0,118.0 125.0,122.5 125.0,113.5"/>
+<line class="ln ln-neutral" x1="236" y1="118" x2="246.0" y2="118.0"/>
+<polygon class="ah ah-neutral" points="254.0,118.0 245.0,122.5 245.0,113.5"/>
+<line class="ln ln-neutral" x1="366" y1="118" x2="376.0" y2="118.0"/>
+<polygon class="ah ah-neutral" points="384.0,118.0 375.0,122.5 375.0,113.5"/>
+<line class="ln ln-neutral" x1="536" y1="118" x2="546.0" y2="118.0"/>
+<polygon class="ah ah-neutral" points="554.0,118.0 545.0,122.5 545.0,113.5"/>
+<line class="ln ln-neutral" x1="666" y1="118" x2="676.0" y2="118.0"/>
+<polygon class="ah ah-neutral" points="684.0,118.0 675.0,122.5 675.0,113.5"/>
+<polyline class="ln ln-neutral dashed" points="716,146 716,220 186,220 186.0,156.0" fill="none"/>
+<polygon class="ah ah-neutral" points="186.0,148.0 190.5,157.0 181.5,157.0"/>
+<text class="tx tx-muted halo" x="451" y="212" text-anchor="middle" style="font-size:11px">append the chosen token and repeat, one token at a time, until a stop token</text>
+<text class="tx tx-muted" x="60" y="40" text-anchor="middle" style="font-size:11px">&quot;Summarise this&quot;</text>
+<text class="tx tx-muted" x="186" y="40" text-anchor="middle" style="font-size:11px">[Summ][arise][ this]</text>
+<text class="tx tx-muted" x="311" y="40" text-anchor="middle" style="font-size:11px">[0.12, -0.8, ...]</text>
+<text class="tx tx-muted" x="611" y="40" text-anchor="middle" style="font-size:11px">the: 41%  this: 22%</text>
+<text class="tx tx-muted" x="611" y="54" text-anchor="middle" style="font-size:11px">a: 9%  ...</text>
+</svg></div><figcaption>Left to right is one step. The dashed return path is why responses stream word by word and why longer outputs cost more: each token is a full pass through the model.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Have the learner narrate the loop for a one-sentence prompt. Then explain that the model cannot revise earlier tokens, which is why 'think step by step' helps: it gives the model tokens to reason with before committing to an answer.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Cost and latency scale with tokens in and out. Pricing, prompt design, and context limits are all token budgets.</li><li>Because output is sampled from probabilities, the same prompt can give different answers. Determinism is a setting (temperature), not a default.</li><li>The model has no database lookup step. Facts are patterns in weights, so anything rare, recent, or private needs to be supplied in the prompt (see RAG).</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Tokens</strong> are sub-word pieces; roughly 3 to 4 characters of English each. <strong>Embeddings</strong> map each token to a vector of a few thousand numbers. Each <strong>transformer layer</strong> runs self-attention (each position computes how much to weigh every other position, with multiple 'heads' looking for different relationships) followed by a feed-forward network; residual connections and layer normalisation keep training stable. Frontier models stack dozens of these layers. The final layer produces a score for every token in the vocabulary, turned into probabilities with softmax.</p><p><strong>Sampling controls</strong> (from the Google prompt-engineering whitepaper): temperature 0 always picks the top token (greedy, deterministic); higher values flatten the distribution and increase variety. Top-K limits choice to the K most likely tokens; top-P keeps the smallest set whose probabilities sum to P. Use low temperature for extraction and classification, higher for brainstorming.</p><p>The <strong>context window</strong> is the maximum number of tokens the model can attend to at once (prompt plus output). Attention cost grows with the square of that length, which is why long contexts are slower and pricier.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>vector</strong> is just a list of numbers; two vectors are 'close' when their numbers are similar. A <strong>probability distribution</strong> assigns a share of 100% to every option. <strong>Streaming</strong> means the interface shows tokens as they are produced rather than waiting for the full answer.</p></div></details>
+</div></section>
+<section class="lesson" id="how-chat-is-built">
+<div class="lesson-head"><span class="num">04</span><h2>A chat assistant is a base model plus two rounds of human shaping</h2></div>
+<p class="thesis">Pretraining makes a model that completes text. Fine-tuning on human-written examples teaches it to answer. Learning from human preferences teaches it to answer well and safely. Your product is the fourth stage, and it is the only one you control.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 320" role="img" aria-label="Four stages: pretraining on internet text produces a base model; supervised fine-tuning on human examples; reinforcement learning from human feedback; then serving with tools and guardrails" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="94" y="30" text-anchor="middle" style="font-size:12px;font-weight:700">1 · Pretrain</text>
+<rect class="bx bx-data" x="16" y="44" width="156" height="58" rx="10"/>
+<text class="tx tx-data" x="94.0" y="70.0" text-anchor="middle" style="font-size:13px;font-weight:600">Trillions of tokens</text>
+<text class="tx tx-muted" x="94.0" y="86.0" text-anchor="middle" style="font-size:11px">web, books, code</text>
+<line class="ln ln-neutral" x1="94" y1="102" x2="94.0" y2="122.0"/>
+<polygon class="ah ah-neutral" points="94.0,130.0 89.5,121.0 98.5,121.0"/>
+<rect class="bx bx-model" x="16" y="132" width="156" height="58" rx="10"/>
+<text class="tx tx-model" x="94.0" y="158.0" text-anchor="middle" style="font-size:13px;font-weight:600">Base model</text>
+<text class="tx tx-muted" x="94.0" y="174.0" text-anchor="middle" style="font-size:11px">predicts next token</text>
+<text class="tx tx-muted" x="94" y="218" text-anchor="middle" style="font-size:11px">months, $10M to $1B+</text>
+<text class="tx tx-muted caps" x="284" y="30" text-anchor="middle" style="font-size:12px;font-weight:700">2 · Instruct</text>
+<rect class="bx bx-human" x="206" y="44" width="156" height="58" rx="10"/>
+<text class="tx tx-human" x="284.0" y="70.0" text-anchor="middle" style="font-size:13px;font-weight:600">Human-written</text>
+<text class="tx tx-muted" x="284.0" y="86.0" text-anchor="middle" style="font-size:11px">Q&amp;A demonstrations</text>
+<line class="ln ln-neutral" x1="284" y1="102" x2="284.0" y2="122.0"/>
+<polygon class="ah ah-neutral" points="284.0,130.0 279.5,121.0 288.5,121.0"/>
+<rect class="bx bx-model" x="206" y="132" width="156" height="58" rx="10"/>
+<text class="tx tx-model" x="284.0" y="158.0" text-anchor="middle" style="font-size:13px;font-weight:600">Instruct model</text>
+<text class="tx tx-muted" x="284.0" y="174.0" text-anchor="middle" style="font-size:11px">follows instructions</text>
+<text class="tx tx-muted" x="284" y="218" text-anchor="middle" style="font-size:11px">weeks</text>
+<text class="tx tx-muted caps" x="474" y="30" text-anchor="middle" style="font-size:12px;font-weight:700">3 · Align</text>
+<rect class="bx bx-human" x="396" y="44" width="156" height="58" rx="10"/>
+<text class="tx tx-human" x="474.0" y="70.0" text-anchor="middle" style="font-size:13px;font-weight:600">Human rankings</text>
+<text class="tx tx-muted" x="474.0" y="86.0" text-anchor="middle" style="font-size:11px">of candidate answers</text>
+<line class="ln ln-neutral" x1="474" y1="102" x2="474.0" y2="122.0"/>
+<polygon class="ah ah-neutral" points="474.0,130.0 469.5,121.0 478.5,121.0"/>
+<rect class="bx bx-model" x="396" y="132" width="156" height="58" rx="10"/>
+<text class="tx tx-model" x="474.0" y="158.0" text-anchor="middle" style="font-size:13px;font-weight:600">Aligned model</text>
+<text class="tx tx-muted" x="474.0" y="174.0" text-anchor="middle" style="font-size:11px">helpful, safe, on-brand</text>
+<text class="tx tx-muted" x="474" y="218" text-anchor="middle" style="font-size:11px">weeks, ongoing</text>
+<text class="tx tx-muted caps" x="664" y="30" text-anchor="middle" style="font-size:12px;font-weight:700">4 · Serve</text>
+<rect class="bx bx-tool" x="586" y="44" width="156" height="58" rx="10"/>
+<text class="tx tx-tool" x="664.0" y="70.0" text-anchor="middle" style="font-size:13px;font-weight:600">Your prompt, tools,</text>
+<text class="tx tx-muted" x="664.0" y="86.0" text-anchor="middle" style="font-size:11px">guardrails, UI</text>
+<line class="ln ln-neutral" x1="664" y1="102" x2="664.0" y2="122.0"/>
+<polygon class="ah ah-neutral" points="664.0,130.0 659.5,121.0 668.5,121.0"/>
+<rect class="bx bx-tool" x="586" y="132" width="156" height="58" rx="10"/>
+<text class="tx tx-tool" x="664.0" y="158.0" text-anchor="middle" style="font-size:13px;font-weight:600">Your product</text>
+<text class="tx tx-muted" x="664.0" y="174.0" text-anchor="middle" style="font-size:11px">chat, agent, feature</text>
+<text class="tx tx-muted" x="664" y="218" text-anchor="middle" style="font-size:11px">your team, continuous</text>
+<line class="ln ln-model" x1="172" y1="161" x2="196.0" y2="161.0"/>
+<polygon class="ah ah-model" points="204.0,161.0 195.0,165.5 195.0,156.5"/>
+<line class="ln ln-model" x1="362" y1="161" x2="386.0" y2="161.0"/>
+<polygon class="ah ah-model" points="394.0,161.0 385.0,165.5 385.0,156.5"/>
+<line class="ln ln-model" x1="552" y1="161" x2="576.0" y2="161.0"/>
+<polygon class="ah ah-model" points="584.0,161.0 575.0,165.5 575.0,156.5"/>
+<rect class="bx bx-model" x="396" y="236" width="156" height="34" rx="10"/>
+<text class="tx tx-model" x="474.0" y="257.32" text-anchor="middle" style="font-size:12px;font-weight:600">Reward model</text>
+<text class="tx tx-muted" x="474" y="292" text-anchor="middle" style="font-size:10px">learns what humans preferred</text>
+<line class="ln ln-model dashed" x1="530" y1="190" x2="530.0" y2="226.0"/>
+<polygon class="ah ah-model" points="530.0,234.0 525.5,225.0 534.5,225.0"/>
+<text class="tx" x="20" y="218" text-anchor="middle" style="font-size:1px"></text>
+</svg></div><figcaption>Stages 1 to 3 happen inside the model lab. Stage 4 is where product teams live: the same aligned model becomes very different products depending on prompt, tools, and guardrails.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Emphasise the asymmetry: labs spend hundreds of millions on stages 1 to 3, and a product team can spend a week on stage 4 and still differentiate. Then ask: if the model is the same for every competitor, where does your moat come from? (Data, workflow, distribution, evals.)</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>You are buying stages 1 to 3 as a commodity. Switching vendors is mostly a stage-4 cost, so avoid designs that hard-wire one model's quirks.</li><li>Alignment is what makes the model refuse or hedge. When it refuses something legitimate, that is a stage-3 artefact you route around with prompting, not a bug you can fix.</li><li>The behaviour you see in a demo is the lab's defaults. Your prompt, context, and tools change it more than the choice between the top three vendors.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Pretraining</strong> is unsupervised next-token prediction on a huge corpus; it produces a base model that continues text but does not naturally answer questions. <strong>Supervised fine-tuning (SFT)</strong> trains on curated prompt-response pairs so the model behaves like an assistant. <strong>RLHF</strong> (reinforcement learning from human feedback) collects human rankings of candidate answers, trains a reward model to imitate those preferences, then optimises the assistant against the reward model. Newer variants use AI feedback (RLAIF) or verifiable rewards (RLVR) for maths and code, which is how reasoning models are trained.</p><p><strong>Parameter-efficient fine-tuning</strong> (LoRA and adapters) lets a product team do a small stage-2 style update on top of a vendor model, training a tiny fraction of the weights.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Fine-tuning</strong> means continuing training on a smaller, targeted data set. <strong>Reinforcement learning</strong> trains by reward rather than by labelled answers: the model tries things and is nudged toward what scored well. A <strong>base model</strong> is what exists before any of that shaping.</p></div></details>
+</div></section>
+<section class="lesson" id="model-menu">
+<div class="lesson-head"><span class="num">05</span><h2>Model choice is a quality, speed, and cost trade-off that you re-make every quarter</h2></div>
+<p class="thesis">Small models are cheap and fast enough for narrow tasks; frontier models are for judgement and multi-step work. Most products use several, routed by task. The right answer changes as the frontier moves, so design for swapping.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Quality versus cost plane showing small, mid-size, and frontier model tiers, with quantization and distillation arrows moving points toward lower cost" xmlns="http://www.w3.org/2000/svg">
+<line class="ln ln-neutral" x1="70" y1="250" x2="730" y2="250"/>
+<line class="ln ln-neutral" x1="70" y1="250" x2="70" y2="30"/>
+<text class="tx tx-muted" x="400" y="282" text-anchor="middle" style="font-size:11px">cost per token and latency  →</text>
+<text class="tx tx-muted" x="40" y="140" text-anchor="middle" style="font-size:11px">quality  ↑</text>
+<circle class="dt dt-model" cx="160" cy="200" r="8"/>
+<text class="tx" x="160" y="180" text-anchor="middle" style="font-size:12px;font-weight:600">Small / fast</text>
+<text class="tx tx-muted" x="160" y="224" text-anchor="middle" style="font-size:10px">classification, routing, extraction</text>
+<circle class="dt dt-model" cx="360" cy="130" r="9"/>
+<text class="tx" x="360" y="110" text-anchor="middle" style="font-size:12px;font-weight:600">Mid-size</text>
+<text class="tx tx-muted" x="360" y="154" text-anchor="middle" style="font-size:10px">most production chat and summarisation</text>
+<circle class="dt dt-model" cx="600" cy="70" r="10"/>
+<text class="tx" x="600" y="50" text-anchor="middle" style="font-size:12px;font-weight:600">Frontier</text>
+<text class="tx tx-muted" x="600" y="94" text-anchor="middle" style="font-size:10px">reasoning, agents, hard judgement</text>
+<circle class="dt dt-data" cx="300" cy="200" r="7"/>
+<text class="tx tx-data" x="312" y="204" text-anchor="start" style="font-size:10px">open-weight (run it yourself)</text>
+<line class="ln ln-tool dashed" x1="590" y1="76" x2="477.6" y2="115.4"/>
+<polygon class="ah ah-tool" points="470.0,118.0 477.0,110.8 480.0,119.3"/>
+<text class="tx tx-muted halo" x="542.0" y="108.8" text-anchor="middle" style="font-size:11px">distil or quantise</text>
+<polyline class="ln ln-neutral dashed" points="660,70 700,70 700.0,42.0" fill="none"/>
+<polygon class="ah ah-neutral" points="700.0,34.0 704.5,43.0 695.5,43.0"/>
+<text class="tx tx-muted halo" x="560" y="34" text-anchor="middle" style="font-size:11px">frontier moves up every few months</text>
+</svg></div><figcaption>Every point is a model tier, not a brand. Techniques like distillation and quantisation pull a capable model down and left; the frontier itself keeps rising, so last year's frontier is this year's mid-size.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask the learner to place three features of their product on this plane. Usually one belongs bottom-left (cheap classification) and one belongs top-right (a judgement call). Introduce 'routing': a small model decides which big model to call.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>A single-model architecture overpays. Route simple calls to small models and reserve frontier calls for the steps that need them.</li><li>Open-weight models trade vendor dependence for operational burden; the question is whether you have the team to run them.</li><li>Budget for re-evaluation: a quarterly model review is a real ritual in AI product teams because the menu changes that fast.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>From the Google LLM whitepaper's trade-off section: <strong>quality vs latency/cost</strong> can often be improved with marginal quality loss by using a smaller model or a quantised one; the practical question is whether the model still performs <em>your</em> task, not whether it lost benchmark points. <strong>Latency vs cost</strong> is really latency vs throughput: batching more requests per GPU lowers cost per token but raises per-request wait, so bulk offline jobs and interactive chat want different settings.</p><p><strong>Quantisation</strong> stores weights in 8- or 4-bit integers instead of 32-bit floats: smaller memory, faster arithmetic, usually tiny quality change. <strong>Distillation</strong> trains a small student model to imitate a large teacher, keeping much of the quality at a fraction of the cost. Output-preserving speedups include <strong>prefix caching</strong> (reuse computation for a repeated system prompt), <strong>speculative decoding</strong> (a small model drafts, the big one verifies), and batching.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Latency</strong> is how long one request takes; <strong>throughput</strong> is how many requests a system handles per second. <strong>Open-weight</strong> means the trained parameters are downloadable, so you can host the model yourself; <strong>closed</strong> means you call the vendor's API. <strong>GPU</strong> chips do the massive parallel arithmetic that inference needs.</p></div></details>
+</div></section>
+<section class="lesson" id="build-ladder">
+<div class="lesson-head"><span class="num">06</span><h2>There are four ways to make a model yours, and you climb them in order</h2></div>
+<p class="thesis">Prompting fixes instructions. RAG fixes missing knowledge. Fine-tuning fixes style and behaviour. Agents add the ability to act. Each rung costs more and is harder to undo, so exhaust the cheaper rung first.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Four ascending steps: prompting, retrieval-augmented generation, fine-tuning, agents, with control and effort rising" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-tool" x="60" y="200" width="150" height="56" rx="10"/>
+<text class="tx tx-tool" x="135.0" y="225.0" text-anchor="middle" style="font-size:13px;font-weight:600">Prompting</text>
+<text class="tx tx-muted" x="135.0" y="241.0" text-anchor="middle" style="font-size:11px">change the instructions</text>
+<text class="tx tx-muted" x="135" y="276" text-anchor="middle" style="font-size:10px">hours to first version</text>
+<line class="ln ln-neutral" x1="210" y1="228" x2="227.0" y2="185.4"/>
+<polygon class="ah ah-neutral" points="230.0,178.0 230.8,188.0 222.5,184.7"/>
+<rect class="bx bx-data" x="230" y="150" width="150" height="56" rx="10"/>
+<text class="tx tx-data" x="305.0" y="175.0" text-anchor="middle" style="font-size:13px;font-weight:600">RAG</text>
+<text class="tx tx-muted" x="305.0" y="191.0" text-anchor="middle" style="font-size:11px">add your knowledge</text>
+<text class="tx tx-muted" x="305" y="226" text-anchor="middle" style="font-size:10px">days to first version</text>
+<line class="ln ln-neutral" x1="380" y1="178" x2="397.0" y2="135.4"/>
+<polygon class="ah ah-neutral" points="400.0,128.0 400.8,138.0 392.5,134.7"/>
+<rect class="bx bx-model" x="400" y="100" width="150" height="56" rx="10"/>
+<text class="tx tx-model" x="475.0" y="125.0" text-anchor="middle" style="font-size:13px;font-weight:600">Fine-tuning</text>
+<text class="tx tx-muted" x="475.0" y="141.0" text-anchor="middle" style="font-size:11px">change the behaviour</text>
+<text class="tx tx-muted" x="475" y="176" text-anchor="middle" style="font-size:10px">weeks to first version</text>
+<line class="ln ln-neutral" x1="550" y1="128" x2="567.0" y2="85.4"/>
+<polygon class="ah ah-neutral" points="570.0,78.0 570.8,88.0 562.5,84.7"/>
+<rect class="bx bx-model" x="570" y="50" width="150" height="56" rx="10"/>
+<text class="tx tx-model" x="645.0" y="75.0" text-anchor="middle" style="font-size:13px;font-weight:600">Agents</text>
+<text class="tx tx-muted" x="645.0" y="91.0" text-anchor="middle" style="font-size:11px">let it act with tools</text>
+<text class="tx tx-muted" x="645" y="126" text-anchor="middle" style="font-size:10px">weeks+ to first version</text>
+<line class="ln ln-neutral" x1="30" y1="270" x2="30" y2="40"/>
+<text class="tx tx-muted" x="22" y="30" text-anchor="start" style="font-size:11px">control &amp; effort</text>
+<text class="tx tx-muted" x="400" y="292" text-anchor="middle" style="font-size:11px">start at the left; move right only when the previous step cannot get you there</text>
+</svg></div><figcaption>Most 'we need to fine-tune' requests are really RAG problems, and most RAG problems start as prompt problems. Climb only when evaluation says the current rung is the limit.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Give the learner three complaints and have them pick the rung: 'it doesn't know our refund policy' (RAG), 'it sounds too formal' (prompt first, fine-tune if that fails), 'it should file the ticket itself' (agent).</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>The ladder is a budgeting tool. Each rung roughly multiplies the engineering and evaluation cost of the previous one.</li><li>Fine-tuning locks knowledge into a model version; RAG keeps it in a document store you can update tonight. Prefer the one you can change without retraining.</li><li>Agents multiply both value and risk: every tool call is an action in the world that needs permissions, logging, and a way to undo.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Prompting</strong> covers system prompts, examples, and structured output formats. <strong>RAG</strong> retrieves relevant passages at request time and puts them in the prompt (next section). <strong>Fine-tuning</strong> adjusts weights on your examples; parameter-efficient methods make it affordable but it still needs a clean training set and a held-out evaluation set. <strong>Agents</strong> wrap the model in a loop with tools and memory (section 8). A fifth option, training your own model, is rarely justified outside labs.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>system prompt</strong> is the standing instruction the product sends with every request, invisible to the end user. A <strong>tool</strong> in this context is any function the model can request the software to run (search, database query, send email).</p></div></details>
+</div></section>
+<section class="lesson" id="rag">
+<div class="lesson-head"><span class="num">07</span><h2>RAG gives the model an open book instead of trying to teach it everything</h2></div>
+<p class="thesis">Retrieval-augmented generation finds the few passages relevant to the question and pastes them into the prompt. The model then answers from what it was shown, which makes answers current, private, and citable.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 330" role="img" aria-label="Two lanes: offline lane chunks and embeds documents into a vector store; online lane embeds the question, retrieves matching passages, builds a prompt and generates an answer with citations" xmlns="http://www.w3.org/2000/svg">
+<rect class="fr fr-neutral" x="10" y="10" width="740" height="120" rx="14"/>
+<text class="tx tx-neutral caps" x="22" y="28" text-anchor="start" style="font-size:11px;font-weight:600">Offline: build the library (runs on a schedule)</text>
+<rect class="bx bx-data" x="30" y="50" width="120" height="56" rx="10"/>
+<text class="tx tx-data" x="90.0" y="75.0" text-anchor="middle" style="font-size:13px;font-weight:600">Your documents</text>
+<text class="tx tx-muted" x="90.0" y="91.0" text-anchor="middle" style="font-size:11px">policies, tickets, wiki</text>
+<rect class="bx bx-tool" x="190" y="50" width="110" height="56" rx="10"/>
+<text class="tx tx-tool" x="245.0" y="75.0" text-anchor="middle" style="font-size:13px;font-weight:600">Chunk</text>
+<text class="tx tx-muted" x="245.0" y="91.0" text-anchor="middle" style="font-size:11px">split into passages</text>
+<rect class="bx bx-model" x="340" y="50" width="110" height="56" rx="10"/>
+<text class="tx tx-model" x="395.0" y="75.0" text-anchor="middle" style="font-size:13px;font-weight:600">Embed</text>
+<text class="tx tx-muted" x="395.0" y="91.0" text-anchor="middle" style="font-size:11px">passage → vector</text>
+<rect class="bx bx-data" x="490" y="50" width="150" height="56" rx="10"/>
+<text class="tx tx-data" x="565.0" y="75.0" text-anchor="middle" style="font-size:13px;font-weight:600">Vector store</text>
+<text class="tx tx-muted" x="565.0" y="91.0" text-anchor="middle" style="font-size:11px">index of passages</text>
+<line class="ln ln-neutral" x1="150" y1="78" x2="180.0" y2="78.0"/>
+<polygon class="ah ah-neutral" points="188.0,78.0 179.0,82.5 179.0,73.5"/>
+<line class="ln ln-neutral" x1="300" y1="78" x2="330.0" y2="78.0"/>
+<polygon class="ah ah-neutral" points="338.0,78.0 329.0,82.5 329.0,73.5"/>
+<line class="ln ln-neutral" x1="450" y1="78" x2="480.0" y2="78.0"/>
+<polygon class="ah ah-neutral" points="488.0,78.0 479.0,82.5 479.0,73.5"/>
+<rect class="fr fr-neutral" x="10" y="150" width="740" height="170" rx="14"/>
+<text class="tx tx-neutral caps" x="22" y="168" text-anchor="start" style="font-size:11px;font-weight:600">Online: answer one question (runs per request)</text>
+<rect class="bx bx-human" x="30" y="200" width="120" height="56" rx="10"/>
+<text class="tx tx-human" x="90.0" y="232.68" text-anchor="middle" style="font-size:13px;font-weight:600">Question</text>
+<rect class="bx bx-model" x="190" y="200" width="110" height="56" rx="10"/>
+<text class="tx tx-model" x="245.0" y="225.0" text-anchor="middle" style="font-size:13px;font-weight:600">Embed</text>
+<text class="tx tx-muted" x="245.0" y="241.0" text-anchor="middle" style="font-size:11px">question → vector</text>
+<rect class="bx bx-tool" x="340" y="200" width="110" height="56" rx="10"/>
+<text class="tx tx-tool" x="395.0" y="225.0" text-anchor="middle" style="font-size:13px;font-weight:600">Retrieve</text>
+<text class="tx tx-muted" x="395.0" y="241.0" text-anchor="middle" style="font-size:11px">top-k nearest</text>
+<rect class="bx bx-data" x="490" y="200" width="150" height="56" rx="10"/>
+<text class="tx tx-data" x="565.0" y="225.0" text-anchor="middle" style="font-size:13px;font-weight:600">Prompt</text>
+<text class="tx tx-muted" x="565.0" y="241.0" text-anchor="middle" style="font-size:11px">question + passages</text>
+<rect class="bx bx-model" x="660" y="200" width="80" height="56" rx="10"/>
+<text class="tx tx-model" x="700.0" y="232.68" text-anchor="middle" style="font-size:13px;font-weight:600">LLM</text>
+<line class="ln ln-neutral" x1="150" y1="228" x2="180.0" y2="228.0"/>
+<polygon class="ah ah-neutral" points="188.0,228.0 179.0,232.5 179.0,223.5"/>
+<line class="ln ln-neutral" x1="300" y1="228" x2="330.0" y2="228.0"/>
+<polygon class="ah ah-neutral" points="338.0,228.0 329.0,232.5 329.0,223.5"/>
+<line class="ln ln-neutral" x1="450" y1="228" x2="480.0" y2="228.0"/>
+<polygon class="ah ah-neutral" points="488.0,228.0 479.0,232.5 479.0,223.5"/>
+<line class="ln ln-neutral" x1="640" y1="228" x2="650.0" y2="228.0"/>
+<polygon class="ah ah-neutral" points="658.0,228.0 649.0,232.5 649.0,223.5"/>
+<line class="ln ln-data dashed" x1="565" y1="106" x2="402.0" y2="194.2"/>
+<polygon class="ah ah-data" points="395.0,198.0 400.8,189.8 405.1,197.7"/>
+<text class="tx tx-muted halo" x="488.5" y="139.4" text-anchor="middle" style="font-size:11px">search the index</text>
+<polyline class="ln ln-human" points="700,256 700,296 208.0,296.0" fill="none"/>
+<polygon class="ah ah-human" points="200.0,296.0 209.0,291.5 209.0,300.5"/>
+<text class="tx tx-muted halo" x="450" y="288" text-anchor="middle" style="font-size:11px">answer with citations to the passages used</text>
+</svg></div><figcaption>The top lane runs whenever documents change; the bottom lane runs on every question. The dashed arrow is the actual retrieval: nearest neighbours in vector space.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask what breaks if the top lane is stale (answers cite old policy) versus if retrieval returns the wrong passages (confident wrong answers). Both look like 'the AI is wrong' to users but have different owners.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>RAG is the default first architecture for any 'ask questions about our stuff' feature. It is a data pipeline problem more than a model problem.</li><li>Quality depends on chunking, retrieval, and document hygiene. A brilliant model with bad retrieval still hallucinates.</li><li>Citations are the trust feature. Design the UI to show which passages were used so users can verify.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Passages are embedded with an <strong>embedding model</strong> into vectors; similarity is cosine distance. Production systems usually combine vector search with keyword search (<strong>hybrid retrieval</strong>) and add a <strong>reranker</strong> that re-scores the top candidates. <strong>Agentic RAG</strong> (ByteByteGo EP169) lets the model decide whether to retrieve, rewrite the query, or try another source when the first result is empty. Metadata filters (tenant, date, permission) are essential for enterprise deployments so a user never retrieves another user's documents.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>An <strong>index</strong> is a data structure built for fast lookup. A <strong>vector database</strong> stores embeddings and answers 'which stored vectors are closest to this one'. <strong>Chunking</strong> is splitting a long document into passages small enough to fit several into one prompt.</p></div></details>
+</div></section>
+<section class="lesson" id="agents">
+<div class="lesson-head"><span class="num">08</span><h2>An agent is a model in a loop with tools, memory, and permission to act</h2></div>
+<p class="thesis">A chatbot answers once. An agent keeps going: it plans, calls a tool, reads the result, and decides the next step until the goal is met. The loop is the product; the model is one component inside it.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 330" role="img" aria-label="Agent loop: a goal from a person enters a think-act-observe cycle around a language model, calling tools through MCP, with memory attached, until it returns a result" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="20" y="40" width="130" height="56" rx="10"/>
+<text class="tx tx-human" x="85.0" y="65.0" text-anchor="middle" style="font-size:13px;font-weight:600">Goal</text>
+<text class="tx tx-muted" x="85.0" y="81.0" text-anchor="middle" style="font-size:11px">&#x27;reconcile these invoices&#x27;</text>
+<rect class="bx bx-model" x="300" y="130" width="160" height="70" rx="10"/>
+<text class="tx tx-model" x="380.0" y="162.0" text-anchor="middle" style="font-size:13px;font-weight:600">LLM</text>
+<text class="tx tx-muted" x="380.0" y="178.0" text-anchor="middle" style="font-size:11px">reasons and decides</text>
+<rect class="bx bx-model" x="300" y="30" width="160" height="50" rx="10"/>
+<text class="tx tx-model" x="380.0" y="52.0" text-anchor="middle" style="font-size:13px;font-weight:600">Think / plan</text>
+<text class="tx tx-muted" x="380.0" y="68.0" text-anchor="middle" style="font-size:11px">what next?</text>
+<rect class="bx bx-tool" x="540" y="130" width="130" height="70" rx="10"/>
+<text class="tx tx-tool" x="605.0" y="162.0" text-anchor="middle" style="font-size:13px;font-weight:600">Act</text>
+<text class="tx tx-muted" x="605.0" y="178.0" text-anchor="middle" style="font-size:11px">call a tool</text>
+<rect class="bx bx-data" x="300" y="240" width="160" height="50" rx="10"/>
+<text class="tx tx-data" x="380.0" y="262.0" text-anchor="middle" style="font-size:13px;font-weight:600">Observe</text>
+<text class="tx tx-muted" x="380.0" y="278.0" text-anchor="middle" style="font-size:11px">read the result</text>
+<rect class="bx bx-data" x="60" y="130" width="140" height="70" rx="10"/>
+<text class="tx tx-data" x="130.0" y="162.0" text-anchor="middle" style="font-size:13px;font-weight:600">Memory</text>
+<text class="tx tx-muted" x="130.0" y="178.0" text-anchor="middle" style="font-size:11px">notes, past steps</text>
+<rect class="bx bx-tool" x="660" y="250" width="90" height="60" rx="10"/>
+<text class="tx tx-tool" x="705.0" y="277.0" text-anchor="middle" style="font-size:12px;font-weight:600">Tools</text>
+<text class="tx tx-muted" x="705.0" y="293.0" text-anchor="middle" style="font-size:11px">APIs, files, DB</text>
+<line class="ln ln-human" x1="150" y1="68" x2="290.0" y2="55.7"/>
+<polygon class="ah ah-human" points="298.0,55.0 289.4,60.3 288.6,51.3"/>
+<line class="ln ln-model" x1="380" y1="130" x2="380.0" y2="90.0"/>
+<polygon class="ah ah-model" points="380.0,82.0 384.5,91.0 375.5,91.0"/>
+<line class="ln ln-model" x1="460" y1="55" x2="597.9" y2="124.4"/>
+<polygon class="ah ah-model" points="605.0,128.0 594.9,128.0 599.0,119.9"/>
+<text class="tx tx-muted halo" x="539.75" y="87.15" text-anchor="middle" style="font-size:11px">chosen action</text>
+<line class="ln ln-tool" x1="605" y1="200" x2="467.4" y2="258.9"/>
+<polygon class="ah ah-tool" points="460.0,262.0 466.5,254.3 470.0,262.6"/>
+<text class="tx tx-muted halo" x="539.75" y="241.9" text-anchor="middle" style="font-size:11px">result</text>
+<line class="ln ln-data" x1="380" y1="240" x2="380.0" y2="210.0"/>
+<polygon class="ah ah-data" points="380.0,202.0 384.5,211.0 375.5,211.0"/>
+<line class="ln ln-data" x1="200" y1="165" x2="290.0" y2="165.0"/>
+<polygon class="ah ah-data" points="298.0,165.0 289.0,169.5 289.0,160.5"/>
+<text class="tx tx-muted halo" x="249.0" y="157.0" text-anchor="middle" style="font-size:11px">recall</text>
+<polyline class="ln ln-tool" points="670,200 705,200 705.0,240.0" fill="none"/>
+<polygon class="ah ah-tool" points="705.0,248.0 700.5,239.0 709.5,239.0"/>
+<text class="tx tx-muted halo" x="720" y="220" text-anchor="middle" style="font-size:11px">via MCP</text>
+<polyline class="ln ln-data dashed" points="380,290 380,310 110,310 110.0,210.0" fill="none"/>
+<polygon class="ah ah-data" points="110.0,202.0 114.5,211.0 105.5,211.0"/>
+<text class="tx tx-muted halo" x="245" y="304" text-anchor="middle" style="font-size:11px">remember</text>
+<line class="ln ln-neutral" x1="460" y1="165" x2="530.0" y2="165.0"/>
+<polygon class="ah ah-neutral" points="538.0,165.0 529.0,169.5 529.0,160.5"/>
+<text class="tx tx-muted halo" x="499.0" y="157.0" text-anchor="middle" style="font-size:11px">done? no →</text>
+<rect class="bx bx-human" x="560" y="30" width="180" height="50" rx="10"/>
+<text class="tx tx-human" x="650.0" y="52.0" text-anchor="middle" style="font-size:13px;font-weight:600">Result to person</text>
+<text class="tx tx-muted" x="650.0" y="68.0" text-anchor="middle" style="font-size:11px">or ask for approval</text>
+<line class="ln ln-human dashed" x1="460" y1="45" x2="550.0" y2="51.4"/>
+<polygon class="ah ah-human" points="558.0,52.0 548.7,55.8 549.3,46.9"/>
+<text class="tx tx-muted halo" x="509.0" y="40.5" text-anchor="middle" style="font-size:11px">done? yes</text>
+</svg></div><figcaption>MCP (Model Context Protocol) is the standard plug between the loop and the tools: describe a tool once and any MCP-aware agent can call it. Everything in orange is where a person enters or approves.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Walk one lap of the loop out loud with a real task (find duplicate invoices). Then ask where you would put a human approval gate. Point out that ByteByteGo's one-liner is useful: MCP is the plumbing, RAG is the memory, the agent is the manager.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Agents turn AI from an answer into an outcome, which is where the business value in the McKinsey data sits, and where the risk sits too.</li><li>Every tool exposed to an agent is a permission decision. Read-only tools first; write tools behind approval; irreversible tools last or never.</li><li>Evaluate agents on task completion, not on individual answers. Jyothi Nookula's four dimensions below are a usable scorecard.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>The loop is often called <strong>ReAct</strong> (reason, act, observe). Tool calling is a structured output: the model emits a function name and arguments, the software runs it and feeds the result back as a message. <strong>Memory</strong> can be short-term (the conversation), working notes (a scratch file), or long-term (a store the agent reads and writes). <strong>Multi-agent</strong> systems split work across specialised agents; MCP handles tool access while agent-to-agent protocols (A2A) handle their communication.</p><p><strong>Agent performance framework</strong> (Nookula): <em>Effectiveness</em> (goal achievement rate, constraint adherence, failure-mode breakdown), <em>Efficiency</em> (steps to success, time to completion, tokens or cost per successful task), <em>Reliability</em> (variance across runs, regression tracking, recovery rate on retry), <em>Trustworthiness</em> (traceability of reasoning and tool use, safety catches before the user, whether a human reviewer would ship the output).</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>An <strong>API</strong> is a way for one program to ask another to do something. A <strong>function call</strong> is one such request with named inputs. <strong>MCP</strong> is a protocol, meaning an agreed format, for describing tools and calling them, so the same tool works with many agents.</p></div></details>
+</div></section>
+<section class="lesson" id="prompting">
+<div class="lesson-head"><span class="num">09</span><h2>A prompt is a layered brief, and most quality problems are missing layers</h2></div>
+<p class="thesis">Role and rules, supplied context, the task, and the required output shape are four separate things. When an answer is wrong, find the missing layer before blaming the model.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 292" role="img" aria-label="Anatomy of a prompt as stacked layers feeding a model, with sampling knobs alongside" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="150" y="28" text-anchor="middle" style="font-size:11px;font-weight:600">What you send</text>
+<rect class="bx bx-human" x="30" y="40" width="240" height="42" rx="10"/>
+<text class="tx tx-human" x="150.0" y="58.0" text-anchor="middle" style="font-size:12px;font-weight:600">System: role and rules</text>
+<text class="tx tx-muted" x="150.0" y="74.0" text-anchor="middle" style="font-size:11px">&#x27;You are a claims assistant. Never guess.&#x27;</text>
+<rect class="bx bx-data" x="30" y="92" width="240" height="42" rx="10"/>
+<text class="tx tx-data" x="150.0" y="110.0" text-anchor="middle" style="font-size:12px;font-weight:600">Context: documents, examples</text>
+<text class="tx tx-muted" x="150.0" y="126.0" text-anchor="middle" style="font-size:11px">policy excerpt, 3 worked examples</text>
+<rect class="bx bx-human" x="30" y="144" width="240" height="42" rx="10"/>
+<text class="tx tx-human" x="150.0" y="162.0" text-anchor="middle" style="font-size:12px;font-weight:600">Task: the instruction</text>
+<text class="tx tx-muted" x="150.0" y="178.0" text-anchor="middle" style="font-size:11px">&#x27;Classify this claim and explain why.&#x27;</text>
+<rect class="bx bx-tool" x="30" y="196" width="240" height="42" rx="10"/>
+<text class="tx tx-tool" x="150.0" y="214.0" text-anchor="middle" style="font-size:12px;font-weight:600">Output format</text>
+<text class="tx tx-muted" x="150.0" y="230.0" text-anchor="middle" style="font-size:11px">JSON with fields: category, reason</text>
+<rect class="fr fr-neutral" x="20" y="30" width="260" height="220" rx="14"/>
+<line class="ln ln-neutral" x1="280" y1="140" x2="322.0" y2="140.0"/>
+<polygon class="ah ah-neutral" points="330.0,140.0 321.0,144.5 321.0,135.5"/>
+<rect class="bx bx-model" x="332" y="100" width="130" height="80" rx="10"/>
+<text class="tx tx-model" x="397.0" y="144.68" text-anchor="middle" style="font-size:13px;font-weight:600">Model</text>
+<line class="ln ln-neutral" x1="462" y1="140" x2="504.0" y2="140.0"/>
+<polygon class="ah ah-neutral" points="512.0,140.0 503.0,144.5 503.0,135.5"/>
+<rect class="bx bx-neutral" x="514" y="110" width="120" height="60" rx="10"/>
+<text class="tx tx-neutral" x="574.0" y="137.0" text-anchor="middle" style="font-size:13px;font-weight:600">Output</text>
+<text class="tx tx-muted" x="574.0" y="153.0" text-anchor="middle" style="font-size:11px">checked by code</text>
+<text class="tx tx-muted caps" x="440" y="220" text-anchor="middle" style="font-size:11px;font-weight:600">Knobs</text>
+<line class="ln ln-faint" x1="340" y1="240" x2="540" y2="240" style="stroke-width:3"/>
+<circle class="dt dt-model" cx="380" cy="240" r="6"/>
+<text class="tx tx-muted" x="340" y="262" text-anchor="start" style="font-size:10px">temperature 0</text>
+<text class="tx tx-muted" x="540" y="262" text-anchor="end" style="font-size:10px">1+</text>
+<text class="tx tx-muted" x="440" y="280" text-anchor="middle" style="font-size:10px">deterministic ← → varied</text>
+<text class="tx tx-muted" x="560" y="236" text-anchor="start" style="font-size:10px">top-p / top-k: how many</text>
+<text class="tx tx-muted" x="560" y="251" text-anchor="start" style="font-size:10px">candidates are eligible</text>
+<text class="tx tx-muted" x="560" y="266" text-anchor="start" style="font-size:10px">max tokens: length cap</text>
+</svg></div><figcaption>The four layers map to the Google prompt-engineering whitepaper's system, contextual, and role prompting plus output structuring. The knobs control randomness and length, not quality.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Show a bad one-line prompt and rebuild it layer by layer with the learner. Then set temperature to 0 for the classification task and explain why a creative-writing feature would want the opposite.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Prompts are product specs written in prose. They belong in version control with tests, not in a Slack thread.</li><li>Structured output (JSON) is what lets the rest of your software trust the model; insist on it for anything automated.</li><li>Few-shot examples are the cheapest quality lever you have. Curating five good examples beats most other interventions.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Techniques from the whitepaper: <strong>zero-shot</strong> (instruction only), <strong>one- and few-shot</strong> (include examples), <strong>system / role / contextual prompting</strong>, <strong>step-back</strong> (ask a general question first), <strong>chain of thought</strong> (ask for reasoning before the answer, which improves accuracy on multi-step problems), <strong>self-consistency</strong> (sample several reasoning paths and vote), <strong>ReAct</strong> (interleave reasoning with tool calls). Best practices: provide examples, design for simplicity, be specific about output, prefer instructions over constraints, control length, use variables, and re-test when the model version changes.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>JSON</strong> is a plain-text format for structured data (named fields and values) that software can parse reliably. <strong>Version control</strong> (Git) tracks every change to a text file so you can see who changed a prompt and roll it back.</p></div></details>
+</div></section>
+<section class="lesson" id="risks">
+<div class="lesson-head"><span class="num">10</span><h2>Every AI failure mode has a place in the pipeline where it enters, and a layer that catches it</h2></div>
+<p class="thesis">Hallucination, prompt injection, leakage, bias, and cost blow-ups are predictable, not mysterious. A guarded pipeline with input checks, output checks, and human review for high-stakes paths is the standard shape.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 280" role="img" aria-label="Request pipeline with guard layers: input guard, model, output guard, human review; risk callouts show where prompt injection, hallucination, leakage, bias, and runaway cost occur" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="16" y="150" width="100" height="56" rx="10"/>
+<text class="tx tx-human" x="66.0" y="182.68" text-anchor="middle" style="font-size:13px;font-weight:600">User input</text>
+<rect class="bx bx-tool" x="146" y="150" width="120" height="56" rx="10"/>
+<text class="tx tx-tool" x="206.0" y="175.0" text-anchor="middle" style="font-size:13px;font-weight:600">Input guard</text>
+<text class="tx tx-muted" x="206.0" y="191.0" text-anchor="middle" style="font-size:11px">filter, classify</text>
+<rect class="bx bx-model" x="296" y="150" width="120" height="56" rx="10"/>
+<text class="tx tx-model" x="356.0" y="175.0" text-anchor="middle" style="font-size:13px;font-weight:600">Model</text>
+<text class="tx tx-muted" x="356.0" y="191.0" text-anchor="middle" style="font-size:11px">+ retrieval, tools</text>
+<rect class="bx bx-tool" x="446" y="150" width="120" height="56" rx="10"/>
+<text class="tx tx-tool" x="506.0" y="175.0" text-anchor="middle" style="font-size:13px;font-weight:600">Output guard</text>
+<text class="tx tx-muted" x="506.0" y="191.0" text-anchor="middle" style="font-size:11px">PII, policy, format</text>
+<rect class="bx bx-human" x="596" y="150" width="150" height="56" rx="10"/>
+<text class="tx tx-human" x="671.0" y="175.0" text-anchor="middle" style="font-size:13px;font-weight:600">Human review</text>
+<text class="tx tx-muted" x="671.0" y="191.0" text-anchor="middle" style="font-size:11px">for high-stakes only</text>
+<line class="ln ln-neutral" x1="116" y1="178" x2="136.0" y2="178.0"/>
+<polygon class="ah ah-neutral" points="144.0,178.0 135.0,182.5 135.0,173.5"/>
+<line class="ln ln-neutral" x1="266" y1="178" x2="286.0" y2="178.0"/>
+<polygon class="ah ah-neutral" points="294.0,178.0 285.0,182.5 285.0,173.5"/>
+<line class="ln ln-neutral" x1="416" y1="178" x2="436.0" y2="178.0"/>
+<polygon class="ah ah-neutral" points="444.0,178.0 435.0,182.5 435.0,173.5"/>
+<line class="ln ln-neutral" x1="566" y1="178" x2="586.0" y2="178.0"/>
+<polygon class="ah ah-neutral" points="594.0,178.0 585.0,182.5 585.0,173.5"/>
+<rect class="bx bx-risk dashed" x="146" y="40" width="120" height="48" rx="10"/>
+<text class="tx tx-risk" x="206.0" y="61.0" text-anchor="middle" style="font-size:12px;font-weight:600">Prompt injection</text>
+<text class="tx tx-muted" x="206.0" y="77.0" text-anchor="middle" style="font-size:11px">input tries to hijack</text>
+<rect class="bx bx-risk dashed" x="296" y="40" width="120" height="48" rx="10"/>
+<text class="tx tx-risk" x="356.0" y="61.0" text-anchor="middle" style="font-size:12px;font-weight:600">Hallucination</text>
+<text class="tx tx-muted" x="356.0" y="77.0" text-anchor="middle" style="font-size:11px">confident, wrong</text>
+<rect class="bx bx-risk dashed" x="446" y="40" width="120" height="48" rx="10"/>
+<text class="tx tx-risk" x="506.0" y="61.0" text-anchor="middle" style="font-size:12px;font-weight:600">Data leakage</text>
+<text class="tx tx-muted" x="506.0" y="77.0" text-anchor="middle" style="font-size:11px">private info out</text>
+<rect class="bx bx-risk dashed" x="296" y="226" width="120" height="44" rx="10"/>
+<text class="tx tx-risk" x="356.0" y="245.0" text-anchor="middle" style="font-size:12px;font-weight:600">Bias</text>
+<text class="tx tx-muted" x="356.0" y="261.0" text-anchor="middle" style="font-size:11px">skewed for some users</text>
+<rect class="bx bx-risk dashed" x="596" y="40" width="150" height="48" rx="10"/>
+<text class="tx tx-risk" x="671.0" y="61.0" text-anchor="middle" style="font-size:12px;font-weight:600">Over-trust</text>
+<text class="tx tx-muted" x="671.0" y="77.0" text-anchor="middle" style="font-size:11px">rubber-stamp review</text>
+<rect class="bx bx-risk dashed" x="16" y="40" width="100" height="48" rx="10"/>
+<text class="tx tx-risk" x="66.0" y="61.0" text-anchor="middle" style="font-size:12px;font-weight:600">Runaway cost</text>
+<text class="tx tx-muted" x="66.0" y="77.0" text-anchor="middle" style="font-size:11px">loops, long inputs</text>
+<line class="ln ln-risk dashed" x1="206" y1="88" x2="206.0" y2="140.0"/>
+<polygon class="ah ah-risk" points="206.0,148.0 201.5,139.0 210.5,139.0"/>
+<line class="ln ln-risk dashed" x1="356" y1="88" x2="356.0" y2="140.0"/>
+<polygon class="ah ah-risk" points="356.0,148.0 351.5,139.0 360.5,139.0"/>
+<line class="ln ln-risk dashed" x1="506" y1="88" x2="506.0" y2="140.0"/>
+<polygon class="ah ah-risk" points="506.0,148.0 501.5,139.0 510.5,139.0"/>
+<line class="ln ln-risk dashed" x1="671" y1="88" x2="671.0" y2="140.0"/>
+<polygon class="ah ah-risk" points="671.0,148.0 666.5,139.0 675.5,139.0"/>
+<line class="ln ln-risk dashed" x1="66" y1="88" x2="66.0" y2="140.0"/>
+<polygon class="ah ah-risk" points="66.0,148.0 61.5,139.0 70.5,139.0"/>
+<line class="ln ln-risk dashed" x1="356" y1="226" x2="356.0" y2="216.0"/>
+<polygon class="ah ah-risk" points="356.0,208.0 360.5,217.0 351.5,217.0"/>
+<text class="tx tx-muted caps" x="380" y="22" text-anchor="middle" style="font-size:11px;font-weight:600">Where each failure enters</text>
+</svg></div><figcaption>Red callouts are failure modes; green boxes are the layers that catch them. Guards are ordinary code and small models, not magic. Governance is deciding which paths get which layers.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Pick one failure per callout and ask who owns it: injection is security, hallucination is product plus evals, leakage is data governance, cost is engineering, bias is legal and product together. Then ask which paths in their product deserve a human in the loop.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Governance is a product decision about which flows are high-stakes. Map each feature to a risk tier and give tiers a standard set of guards.</li><li>Hallucination is not fixable, only bounded. Retrieval with citations, structured output, and evals reduce it; a disclaimer does not.</li><li>Prompt injection means any text the model reads (web pages, emails, documents) can try to give it instructions. Treat model inputs like untrusted user input.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Input guards</strong>: classifiers for injection and abuse, allow-lists for tools, per-user rate limits and token budgets. <strong>Output guards</strong>: PII detection, policy classifiers, schema validation, groundedness checks that compare the answer to retrieved passages. <strong>Observability</strong>: log prompts, retrieved context, tool calls, and outputs so failures can be replayed. <strong>Evaluation</strong> (section 12) is how you know the rate of each failure before and after a change. Regulatory context (EU AI Act risk tiers, sector rules) usually maps neatly onto the same high-stakes classification.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>PII</strong> is personally identifiable information. <strong>Rate limiting</strong> caps how often something can be called. A <strong>classifier</strong> is a small model that sorts inputs into categories (safe / unsafe) and is much cheaper than the main model.</p></div></details>
+</div></section>
+<section class="lesson" id="value">
+<div class="lesson-head"><span class="num">11</span><h2>Almost everyone uses AI; few have moved the P&L, and the difference is workflow redesign</h2></div>
+<p class="thesis">Usage is near-universal, agent experiments are common, and enterprise-level profit impact is still rare. The organisations that see it set growth goals, redesign workflows around AI, and put senior leaders on it.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 230" role="img" aria-label="Horizontal bar chart of five adoption statistics from the McKinsey State of AI 2025 survey" xmlns="http://www.w3.org/2000/svg">
+<text class="tx" x="330" y="41" text-anchor="end" style="font-size:12px">Use AI regularly in at least one function</text>
+<rect class="bar" x="345" y="24" width="317" height="24" rx="4"/>
+<text class="tx" x="669.8" y="41" text-anchor="start" style="font-size:12px;font-weight:600">88%</text>
+<text class="tx" x="330" y="81" text-anchor="end" style="font-size:12px">At least experimenting with AI agents</text>
+<rect class="bar" x="345" y="64" width="223" height="24" rx="4"/>
+<text class="tx" x="576.2" y="81" text-anchor="start" style="font-size:12px;font-weight:600">62%</text>
+<text class="tx" x="330" y="121" text-anchor="end" style="font-size:12px">Report any EBIT impact from AI</text>
+<rect class="bar" x="345" y="104" width="140" height="24" rx="4"/>
+<text class="tx" x="493.4" y="121" text-anchor="start" style="font-size:12px;font-weight:600">39%</text>
+<text class="tx" x="330" y="161" text-anchor="end" style="font-size:12px">Scaling an agentic system somewhere</text>
+<rect class="bar" x="345" y="144" width="83" height="24" rx="4"/>
+<text class="tx" x="435.8" y="161" text-anchor="start" style="font-size:12px;font-weight:600">23%</text>
+<text class="tx" x="330" y="201" text-anchor="end" style="font-size:12px">&#x27;High performers&#x27; (&gt;5% of EBIT from AI)</text>
+<rect class="bar" x="345" y="184" width="22" height="24" rx="4"/>
+<text class="tx" x="374.6" y="201" text-anchor="start" style="font-size:12px;font-weight:600">6%</text>
+<line class="ln ln-faint" x1="345" y1="14" x2="345" y2="214"/>
+</svg></div><figcaption>Share of respondents, McKinsey State of AI 2025 (November 2025, roughly 1,900 respondents). Single measure, so bars share one colour; read the gap between the first bar and the third.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Let the learner react to the gap between 88% and 39%. Then share the high-performer traits from the report: growth and innovation objectives rather than efficiency alone, workflow redesign, CEO-level ownership, and scaling agents in a few functions rather than piloting everywhere.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Pilots are cheap and everyone has them; the scarce capability is redesigning a workflow end to end, which is a product leadership job.</li><li>Set growth or innovation objectives alongside cost. In the survey, efficiency-only programmes were the ones least likely to report significant value.</li><li>Pick two functions and scale agents there rather than spreading thin. No function in the survey had more than roughly one in ten organisations scaling agents.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Other findings worth quoting: about half of high performers intend to redesign workflows; 64% of all respondents say AI is enabling innovation; expectations for workforce size over the next year split roughly a third decrease, four in ten no change, one in ten increase; and a third of high performers commit more than 20% of their digital budgets to AI. The report defines high performers as organisations attributing more than 5% of EBIT to AI and reporting 'significant' value, about 6% of respondents.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>EBIT</strong> is earnings before interest and tax, a standard profit measure. A <strong>pilot</strong> is a limited trial; <strong>scaling</strong> means the capability is in routine use across a function.</p></div></details>
+</div></section>
+<section class="lesson" id="evals">
+<div class="lesson-head"><span class="num">12</span><h2>Evals are the new acceptance tests, and writing them is the PM's job</h2></div>
+<p class="thesis">You cannot unit-test a probabilistic system, but you can score it against a set of real inputs with known-good outputs. The eval set is the sharpest statement of what 'good' means, and it is what lets you change models without fear.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 260" role="img" aria-label="Evaluation loop: define good, build an eval set, run the system, score, inspect failures, change prompt or data or model, and repeat; ship when the score clears the bar" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="16" y="100" width="120" height="56" rx="10"/>
+<text class="tx tx-human" x="76.0" y="125.0" text-anchor="middle" style="font-size:13px;font-weight:600">Define &#x27;good&#x27;</text>
+<text class="tx tx-muted" x="76.0" y="141.0" text-anchor="middle" style="font-size:11px">with real users</text>
+<rect class="bx bx-data" x="166" y="100" width="130" height="56" rx="10"/>
+<text class="tx tx-data" x="231.0" y="125.0" text-anchor="middle" style="font-size:13px;font-weight:600">Eval set</text>
+<text class="tx tx-muted" x="231.0" y="141.0" text-anchor="middle" style="font-size:11px">inputs + expected</text>
+<rect class="bx bx-model" x="326" y="100" width="110" height="56" rx="10"/>
+<text class="tx tx-model" x="381.0" y="125.0" text-anchor="middle" style="font-size:13px;font-weight:600">Run</text>
+<text class="tx tx-muted" x="381.0" y="141.0" text-anchor="middle" style="font-size:11px">prompt + model</text>
+<rect class="bx bx-tool" x="466" y="100" width="100" height="56" rx="10"/>
+<text class="tx tx-tool" x="516.0" y="125.0" text-anchor="middle" style="font-size:13px;font-weight:600">Score</text>
+<text class="tx tx-muted" x="516.0" y="141.0" text-anchor="middle" style="font-size:11px">auto + human</text>
+<rect class="bx bx-human" x="596" y="100" width="150" height="56" rx="10"/>
+<text class="tx tx-human" x="671.0" y="125.0" text-anchor="middle" style="font-size:13px;font-weight:600">Inspect failures</text>
+<text class="tx tx-muted" x="671.0" y="141.0" text-anchor="middle" style="font-size:11px">why did it miss?</text>
+<line class="ln ln-neutral" x1="136" y1="128" x2="156.0" y2="128.0"/>
+<polygon class="ah ah-neutral" points="164.0,128.0 155.0,132.5 155.0,123.5"/>
+<line class="ln ln-neutral" x1="296" y1="128" x2="316.0" y2="128.0"/>
+<polygon class="ah ah-neutral" points="324.0,128.0 315.0,132.5 315.0,123.5"/>
+<line class="ln ln-neutral" x1="436" y1="128" x2="456.0" y2="128.0"/>
+<polygon class="ah ah-neutral" points="464.0,128.0 455.0,132.5 455.0,123.5"/>
+<line class="ln ln-neutral" x1="566" y1="128" x2="586.0" y2="128.0"/>
+<polygon class="ah ah-neutral" points="594.0,128.0 585.0,132.5 585.0,123.5"/>
+<polyline class="ln ln-model" points="671,156 671,210 381,210 381.0,166.0" fill="none"/>
+<polygon class="ah ah-model" points="381.0,158.0 385.5,167.0 376.5,167.0"/>
+<text class="tx tx-muted halo" x="526" y="202" text-anchor="middle" style="font-size:11px">change the prompt, the data, or the model</text>
+<polyline class="ln ln-tool" points="516,100 516,50 612.0,50.0" fill="none"/>
+<polygon class="ah ah-tool" points="620.0,50.0 611.0,54.5 611.0,45.5"/>
+<text class="tx tx-muted halo" x="516" y="42" text-anchor="middle" style="font-size:11px">score clears the bar → ship</text>
+<rect class="bx bx-tool" x="622" y="28" width="120" height="44" rx="10"/>
+<text class="tx tx-tool" x="682.0" y="54.32" text-anchor="middle" style="font-size:12px;font-weight:600">Ship</text>
+</svg></div><figcaption>The loop runs on every prompt change, model upgrade, and retrieval tweak. Tal Raviv and Aman Khan's argument: product sense in AI comes from running this loop yourself in a coding agent, where you can watch the model's reasoning and tool calls.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Have the learner write three eval cases for a feature they know: input, expected output, and how they would score it (exact match, rubric, human). Note that 20 hand-written cases beat zero automated ones.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>An eval set is the contract with engineering. It replaces 'make it good' with a number that goes up.</li><li>Model upgrades become routine: run the evals, compare, ship. Without them every vendor release is a re-launch.</li><li>Building product sense requires hands-on time in the loop. Raviv and Khan recommend using a coding agent for non-technical work precisely because it shows reasoning, tool calls, and the context window filling up.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Scoring methods: exact match for classification and extraction; rubric grading by a stronger model (LLM-as-judge) with spot checks; human review for a sample. Track pass rate per category so a regression in one intent is visible. Keep eval data separate from few-shot examples in the prompt (otherwise you are testing on the training set). For agents, score end-to-end task completion and the four Nookula dimensions rather than individual messages. Concepts Raviv and Khan single out as product-sense builders: context rot (quality degrades as the window fills), memory, tool selection, and context engineering.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>An <strong>acceptance test</strong> checks that a feature does what the spec said. A <strong>regression</strong> is when something that used to work stops working after a change. A <strong>held-out set</strong> is data the system has never seen, used only for scoring.</p></div></details>
+</div></section>
+<section class="endsec" id="glossary"><h2>Glossary</h2><div class="gloss"><div><b>Token</b>A word piece, the unit models read and write and the unit you pay for.</div><div><b>Context window</b>Maximum tokens a model can consider at once, prompt plus answer.</div><div><b>Embedding</b>A list of numbers representing meaning; similar things sit near each other.</div><div><b>Transformer</b>The 2017 architecture behind every modern LLM, built on attention.</div><div><b>Attention</b>The mechanism that lets each token weigh every other token when computing its meaning.</div><div><b>Inference</b>Running a trained model to get an output.</div><div><b>Temperature</b>Sampling knob: 0 is deterministic, higher is more varied.</div><div><b>RAG</b>Retrieval-augmented generation: fetch relevant passages, put them in the prompt.</div><div><b>Fine-tuning</b>Continuing training on your own examples to change behaviour.</div><div><b>Agent</b>A model in a loop with tools and memory that works toward a goal.</div><div><b>MCP</b>Model Context Protocol, a standard way to describe and call tools.</div><div><b>Hallucination</b>A confident, fluent, wrong output.</div><div><b>Prompt injection</b>Text the model reads that tries to give it new instructions.</div><div><b>Eval</b>A scored set of inputs and expected outputs used to measure quality.</div><div><b>Guardrail</b>A check before or after the model that blocks unsafe or malformed content.</div><div><b>Open-weight model</b>A model whose parameters are published so you can run it yourself.</div></div></section>
+<section class="endsec" id="questions"><h2>Questions to ask your team</h2><ol class="qs"><li>Which ring is this feature in: rules, classical ML, or an LLM? What would the rules version look like?</li><li>What is the token budget per request, and what does that cost at ten times today's volume?</li><li>Which rung of the ladder are we on, and what evidence says the cheaper rung is not enough?</li><li>Where does the model's knowledge come from: its weights, retrieved documents, or the user? How fresh is each?</li><li>What can the agent do without a person approving? Which of those actions are irreversible?</li><li>What is our eval set, how many cases, and what was the score before and after the last change?</li><li>Which flows are high-stakes, and what guards do they have that low-stakes flows do not?</li><li>If our vendor doubled prices tomorrow, how long would it take to switch models?</li><li>What in this feature would still be ours if a competitor used the same model?</li></ol></section>
+<section class="endsec" id="reading"><h2>Reading list</h2><p style="color:var(--ink-2);font-size:14.5px">Items marked <b>OneDrive</b> are in Kalyan's Career folder.</p><ul class="reads"><li><b>Foundational Large Language Models & Text Generation (Google, Feb 2025)</b> — OneDrive · AI/Google Gen AI 5 Day Course. The reference for sections 3 to 5; the trade-offs chapter is the best short read on cost and latency.</li><li><b>Prompt Engineering (Lee Boonstra, Google, Feb 2025)</b> — OneDrive · same folder. Sampling settings, techniques, and best practices behind section 9.</li><li><b>The State of AI in 2025 (McKinsey / QuantumBlack)</b> — OneDrive · AI folder. Source of the adoption statistics and the high-performer traits in section 11.</li><li><b>Agent Performance Framework (Jyothi Nookula)</b> — OneDrive · AI folder. One-page scorecard used in section 8.</li><li><b>How to build AI product sense (Tal Raviv & Aman Khan, Lenny's Newsletter)</b> — OneDrive · AI folder. The argument and exercises behind section 12.</li><li><b>Generative AI Bible (CB Insights)</b> — OneDrive · AI folder. Market landscape and the early timeline.</li><li><b>ByteByteGo: MCP vs RAG vs AI Agents (EP202)</b> — <a href="https://blog.bytebytego.com/p/ep202-mcp-vs-rag-vs-ai-agents">blog.bytebytego.com</a>. One diagram for sections 7 and 8.</li><li><b>ByteByteGo: How Large Language Models Learn</b> — <a href="https://blog.bytebytego.com/p/how-large-language-models-learn">blog.bytebytego.com</a> and <a href="https://blog.bytebytego.com/p/how-llms-learn-from-the-internet">How LLMs learn from the internet</a>. Visual companions to section 4.</li><li><b>ByteByteGo: How LLMs See the World</b> — <a href="https://blog.bytebytego.com/p/how-llms-see-the-world">blog.bytebytego.com</a>. Tokenisation, for section 3.</li><li><b>ByteByteGo: RAG vs Agentic RAG (EP169)</b> — <a href="https://blog.bytebytego.com/p/ep169-rag-vs-agentic-rag">blog.bytebytego.com</a>. The next step after section 7.</li><li><b>ByteByteGo: MCP vs A2A vs ACP</b> — <a href="https://blog.bytebytego.com/p/mcp-vs-a2a-vs-acp-how-ai-agents-actually">blog.bytebytego.com</a>. How agents talk to tools and to each other.</li><li><b>ByteByteGo: How to Shrink a Language Model</b> — <a href="https://blog.bytebytego.com/p/how-to-shrink-a-language-model-without-295">blog.bytebytego.com</a>. Quantisation and distillation, for section 5.</li></ul></section>
+</main>
+</div>
+<footer class="footer"><span></span><a href="ml-fundamentals.html">Module 2: ML Fundamentals →</a></footer>
+</div>
+<script>
+(function(){
+  var root=document.documentElement;
+  var notes=document.getElementById('notes-toggle');
+  function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function save(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  if(notes){
+    if(load('vp-notes')==='on'){notes.checked=true;root.setAttribute('data-notes','on')}
+    notes.addEventListener('change',function(){root.setAttribute('data-notes',notes.checked?'on':'off');save('vp-notes',notes.checked?'on':'off')});
+  }
+  var all=document.querySelectorAll('details.disc');
+  var ex=document.getElementById('expand-all');
+  if(ex){ex.addEventListener('click',function(){var open=ex.getAttribute('data-open')!=='1';all.forEach(function(d){d.open=open});ex.setAttribute('data-open',open?'1':'0');ex.textContent=open?'Collapse all':'Expand all'})}
+  var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a});
+  if('IntersectionObserver' in window){
+    var cur=null;
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting){var a=map[e.target.id];if(a&&a!==cur){if(cur)cur.classList.remove('on');a.classList.add('on');cur=a;
+        if(window.innerWidth<=900&&a.scrollIntoView){try{a.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})}catch(x){}}}}});
+    },{rootMargin:'-20% 0px -65% 0px'});
+    Object.keys(map).forEach(function(id){var s=document.getElementById(id);if(s)io.observe(s)});
+  }
+})();
+</script>
+</body>
+</html>

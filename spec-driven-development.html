@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="When AI agents write the code, the specification becomes the work. This module shows the loop, what a spec has to contain, where people stay in charge, and what a product leader&#x27;s week looks like when prototypes take hours.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📐%3C/text%3E%3C/svg%3E">
+<title>Spec-Driven Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#EBEFF4; --ink:#151A22; --ink-2:#4A5361; --ink-3:#7A8494; --line:#D5DBE4; --line-2:#E6EAF0;
+  --accent:#2A78D6; --accent-ink:#FFFFFF;
+  --data:#2A78D6;  --data-fill:#E2EDFA;
+  --model:#4A3AA7; --model-fill:#E8E5F6;
+  --human:#EB6834; --human-fill:#FBE7DE;
+  --tool:#1B9E6E;  --tool-fill:#DDF3E9;
+  --risk:#E34948;  --risk-fill:#FAE2E2;
+  --neutral:#6B7686; --neutral-fill:#ECEFF3;
+  --shadow:0 1px 2px rgba(21,26,34,.06),0 8px 24px -12px rgba(21,26,34,.18);
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding-block:0 48px;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.02;letter-spacing:-.02em}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:700;line-height:1.15}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.caps{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+
+/* masthead */
+.masthead{padding-block:36px 24px;border-bottom:1px solid var(--line);display:grid;gap:14px}
+.series{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.series .mod{color:var(--accent);font-weight:500}
+.lede{font-size:18px;color:var(--ink-2);max-width:62ch}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:6px}
+.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;user-select:none}
+.switch input{appearance:none;width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(16px)}
+.btn{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--ink-3)}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--ink-2);align-items:center}
+.key .caps{margin-right:2px}
+.sw{display:inline-flex;align-items:center;gap:6px}
+.sw i{width:14px;height:14px;border-radius:4px;border:2px solid;display:inline-block}
+.sw-data i{border-color:var(--data);background:var(--data-fill)}
+.sw-model i{border-color:var(--model);background:var(--model-fill)}
+.sw-human i{border-color:var(--human);background:var(--human-fill)}
+.sw-tool i{border-color:var(--tool);background:var(--tool-fill)}
+.sw-risk i{border-color:var(--risk);background:var(--risk-fill)}
+.modlinks{display:flex;gap:8px;flex-wrap:wrap}
+.modlinks a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--ink-2);background:var(--surface)}
+.modlinks a[aria-current]{border-color:var(--accent);color:var(--accent);font-weight:600}
+
+/* layout */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;align-items:start;padding-top:28px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);font-size:14px;display:grid;gap:2px;max-height:calc(100vh - 32px);overflow:auto}
+.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-2);padding:6px 10px;border-radius:8px;border-left:2px solid transparent}
+.toc a .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);min-width:18px}
+.toc a:hover{background:var(--surface)}
+.toc a.on{color:var(--ink);font-weight:600;background:var(--surface);border-left-color:var(--accent)}
+.toc .grp{margin-top:10px}
+main{display:grid;gap:56px;min-width:0}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;gap:20px}
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;max-height:none;padding-block:8px;margin-inline:-16px;padding-inline:16px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface);font-size:13px}
+  .toc a.on{border-color:var(--accent)}
+  .toc .grp{margin-top:0}
+}
+
+/* lesson */
+.lesson{display:grid;gap:18px;scroll-margin-top:24px;min-width:0}
+.lesson-head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.num{font-family:var(--mono);font-size:13px;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:3px 7px;margin-top:4px}
+.thesis{font-family:var(--display);font-size:clamp(18px,2vw,21px);font-weight:500;line-height:1.35;color:var(--ink);max-width:60ch;border-left:3px solid var(--accent);padding-left:14px}
+figure.diagram{margin:0;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px;box-shadow:var(--shadow)}
+figure.diagram .wrap{overflow-x:auto;min-width:0}
+figure.diagram svg{display:block;width:100%;height:auto;min-width:520px;max-width:100%;font-family:var(--body)}
+figcaption{font-size:14px;color:var(--ink-2);margin-top:10px;max-width:70ch}
+.notes{display:none;background:var(--human-fill);border:1px dashed var(--human);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--ink)}
+.notes .caps{color:var(--human);display:block;margin-bottom:4px}
+:root[data-notes="on"] .notes{display:block}
+details.disc{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+details.disc summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:10px}
+details.disc summary::-webkit-details-marker{display:none}
+details.disc summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(-45deg);transition:transform .15s;flex:none}
+details.disc[open] summary::before{transform:rotate(45deg)}
+details.disc .body{padding:0 16px 14px 32px;font-size:15px;color:var(--ink-2);display:grid;gap:10px}
+details.disc ul,details.disc ol{margin:0;padding-left:18px;display:grid;gap:6px}
+details.why summary::after{content:"Director view";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+details.deeper summary::after{content:"Mechanics";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--model)}
+details.basics summary::after{content:"From zero";margin-left:auto;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--tool)}
+.disc-row{display:grid;gap:10px}
+strong{color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.tblwrap{overflow-x:auto;min-width:0}
+
+/* end sections */
+.endsec{display:grid;gap:14px;scroll-margin-top:24px;min-width:0}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gloss div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink-2)}
+.gloss b{display:block;color:var(--ink);font-family:var(--display);font-size:15px}
+.qs{display:grid;gap:8px;padding-left:0;margin:0;list-style:none;counter-reset:q}
+.qs li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 44px;position:relative;font-size:15px}
+.qs li::before{counter-increment:q;content:counter(q);position:absolute;left:14px;top:10px;font-family:var(--mono);font-size:12px;color:var(--accent)}
+.reads{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.reads li{font-size:14.5px;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--line)}
+.reads b{color:var(--ink)}
+.footer{margin-top:56px;border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}
+.footer a{text-decoration:none;font-weight:600}
+
+/* diagram element classes (inline SVG picks up page tokens) */
+.dg .tx{fill:var(--ink)}
+.dg .tx-muted{fill:var(--ink-2)}
+.dg .tx-on{fill:#fff}
+.dg .tx-data{fill:var(--data)} .dg .tx-model{fill:var(--model)} .dg .tx-human{fill:var(--human)} .dg .tx-tool{fill:var(--tool)} .dg .tx-risk{fill:var(--risk)} .dg .tx-neutral{fill:var(--ink-2)}
+.dg .caps{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.dg .halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.dg .bx{stroke-width:1.6}
+.dg .bx-data{fill:var(--data-fill);stroke:var(--data)} .dg .bx-model{fill:var(--model-fill);stroke:var(--model)} .dg .bx-human{fill:var(--human-fill);stroke:var(--human)} .dg .bx-tool{fill:var(--tool-fill);stroke:var(--tool)} .dg .bx-risk{fill:var(--risk-fill);stroke:var(--risk)} .dg .bx-neutral{fill:var(--neutral-fill);stroke:var(--neutral)}
+.dg .dashed{stroke-dasharray:5 4}
+.dg .fr{fill:none;stroke-width:1.2;stroke-dasharray:4 4}
+.dg .fr-data{stroke:var(--data)} .dg .fr-model{stroke:var(--model)} .dg .fr-human{stroke:var(--human)} .dg .fr-tool{stroke:var(--tool)} .dg .fr-risk{stroke:var(--risk)} .dg .fr-neutral{stroke:var(--line)}
+.dg .st{stroke:none} .dg .st-data{fill:var(--data)} .dg .st-model{fill:var(--model)} .dg .st-human{fill:var(--human)} .dg .st-tool{fill:var(--tool)} .dg .st-risk{fill:var(--risk)} .dg .st-neutral{fill:var(--neutral)}
+.dg .dt{stroke:var(--surface);stroke-width:2} .dg .dt-data{fill:var(--data)} .dg .dt-model{fill:var(--model)} .dg .dt-human{fill:var(--human)} .dg .dt-tool{fill:var(--tool)} .dg .dt-risk{fill:var(--risk)} .dg .dt-neutral{fill:var(--neutral)}
+.dg .ln{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dg .ln-neutral{stroke:var(--ink-2)} .dg .ln-data{stroke:var(--data)} .dg .ln-model{stroke:var(--model)} .dg .ln-human{stroke:var(--human)} .dg .ln-tool{stroke:var(--tool)} .dg .ln-risk{stroke:var(--risk)} .dg .ln-faint{stroke:var(--line)}
+.dg .fl{stroke:none} .dg .fl.ln-data{fill:var(--data-fill)} .dg .fl.ln-model{fill:var(--model-fill)} .dg .fl.ln-neutral{fill:var(--neutral-fill)} .dg .fl.ln-risk{fill:var(--risk-fill)} .dg .fl.ln-tool{fill:var(--tool-fill)} .dg .fl.ln-human{fill:var(--human-fill)}
+.dg .ah{stroke:none} .dg .ah-neutral{fill:var(--ink-2)} .dg .ah-data{fill:var(--data)} .dg .ah-model{fill:var(--model)} .dg .ah-human{fill:var(--human)} .dg .ah-tool{fill:var(--tool)} .dg .ah-risk{fill:var(--risk)}
+.dg .bar{fill:var(--data)} .dg .grid{stroke:var(--line-2)}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="masthead">
+  <div class="series"><span>Visual primers for product leaders</span><span>·</span><span class="mod">Module 3 of 4</span></div>
+  <h1>Spec-Driven Development</h1>
+  <p class="lede">When AI agents write the code, the specification becomes the work. This module shows the loop, what a spec has to contain, where people stay in charge, and what a product leader's week looks like when prototypes take hours.</p>
+  <div class="modlinks"><a href="./">← All modules</a><a href="ai-foundations.html">1. AI Foundations</a><a href="ml-fundamentals.html">2. ML Fundamentals</a><a href="spec-driven-development.html" aria-current="page">3. Spec-Driven Development</a><a href="agentic-ai.html">4. Agentic AI</a></div>
+  <div class="toolbar">
+    <label class="switch"><input type="checkbox" id="notes-toggle"> Teaching notes</label>
+    <button class="btn" id="expand-all" type="button">Expand all</button>
+    <div class="key"><span class="caps">Colour key</span><span class="sw sw-data"><i></i>Data</span><span class="sw sw-model"><i></i>Model / compute</span><span class="sw sw-human"><i></i>People</span><span class="sw sw-tool"><i></i>Tools &amp; systems</span><span class="sw sw-risk"><i></i>Risk</span></div>
+  </div>
+</header>
+<div class="layout">
+<nav class="toc" aria-label="Sections"><a href="#why-now"><span class="n">01</span><span>Why now</span></a><a href="#loop"><span class="n">02</span><span>The SDD loop</span></a><a href="#spec-anatomy"><span class="n">03</span><span>Anatomy of a spec</span></a><a href="#spec-pyramid"><span class="n">04</span><span>The spec pyramid</span></a><a href="#context"><span class="n">05</span><span>Context engineering</span></a><a href="#tools"><span class="n">06</span><span>Tool landscape</span></a><a href="#criteria-tests"><span class="n">07</span><span>Criteria become tests</span></a><a href="#checkpoints"><span class="n">08</span><span>Human checkpoints</span></a><a href="#pm-day"><span class="n">09</span><span>The PM's new day</span></a><a href="#anti-patterns"><span class="n">10</span><span>Anti-patterns</span></a><a href="#worked-example"><span class="n">11</span><span>Worked example</span></a><a class="grp" href="#glossary"><span class="n">G</span><span>Glossary</span></a><a href="#questions"><span class="n">Q</span><span>Questions to ask</span></a><a href="#reading"><span class="n">R</span><span>Reading list</span></a></nav>
+<main>
+<section class="lesson" id="why-now">
+<div class="lesson-head"><span class="num">01</span><h2>Coding stopped being the bottleneck, so deciding what to build became the job</h2></div>
+<p class="thesis">Agents can produce working code in minutes from a clear description. What they cannot do is know what you meant. The spec, once a formality, is now the artefact that determines the outcome, and verification against it is the new quality gate.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 250" role="img" aria-label="Two Gantt-style rows comparing where time goes: before, coding dominated; after, spec and verification dominate while coding shrinks" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-muted caps" x="20" y="30" text-anchor="start" style="font-size:11px;font-weight:600">Before: people write the code</text>
+<rect class="bx bx-human" x="20" y="40" width="60" height="40" rx="6"/>
+<text class="tx tx-human" x="50.0" y="64.32" text-anchor="middle" style="font-size:12px;font-weight:600">Idea</text>
+<rect class="bx bx-human" x="84" y="40" width="70" height="40" rx="6"/>
+<text class="tx tx-human" x="119.0" y="64.32" text-anchor="middle" style="font-size:12px;font-weight:600">Spec</text>
+<rect class="bx bx-tool" x="158" y="40" width="330" height="40" rx="6"/>
+<text class="tx tx-tool" x="323.0" y="64.32" text-anchor="middle" style="font-size:12px;font-weight:600">Code</text>
+<rect class="bx bx-tool" x="492" y="40" width="130" height="40" rx="6"/>
+<text class="tx tx-tool" x="557.0" y="64.32" text-anchor="middle" style="font-size:12px;font-weight:600">Test</text>
+<rect class="bx bx-tool" x="626" y="40" width="60" height="40" rx="6"/>
+<text class="tx tx-tool" x="656.0" y="64.32" text-anchor="middle" style="font-size:12px;font-weight:600">Ship</text>
+<text class="tx tx-muted caps" x="20" y="130" text-anchor="start" style="font-size:11px;font-weight:600">After: agents write the code</text>
+<rect class="bx bx-human" x="20" y="140" width="60" height="40" rx="6"/>
+<text class="tx tx-human" x="50.0" y="164.32" text-anchor="middle" style="font-size:12px;font-weight:600">Idea</text>
+<rect class="bx bx-human" x="84" y="140" width="200" height="40" rx="6"/>
+<text class="tx tx-human" x="184.0" y="164.32" text-anchor="middle" style="font-size:12px;font-weight:600">Spec</text>
+<rect class="bx bx-model" x="288" y="140" width="90" height="40" rx="6"/>
+<text class="tx tx-model" x="333.0" y="164.32" text-anchor="middle" style="font-size:12px;font-weight:600">Plan</text>
+<rect class="bx bx-model" x="382" y="140" width="90" height="40" rx="6"/>
+<text class="tx tx-model" x="427.0" y="164.32" text-anchor="middle" style="font-size:12px;font-weight:600">Code</text>
+<rect class="bx bx-tool" x="476" y="140" width="150" height="40" rx="6"/>
+<text class="tx tx-tool" x="551.0" y="164.32" text-anchor="middle" style="font-size:12px;font-weight:600">Verify</text>
+<rect class="bx bx-tool" x="630" y="140" width="60" height="40" rx="6"/>
+<text class="tx tx-tool" x="660.0" y="164.32" text-anchor="middle" style="font-size:12px;font-weight:600">Ship</text>
+<line class="ln ln-risk" x1="300" y1="84" x2="207.1" y2="132.3"/>
+<polygon class="ah ah-risk" points="200.0,136.0 205.9,127.9 210.1,135.8"/>
+<text class="tx tx-muted halo" x="250.0" y="102.0" text-anchor="middle" style="font-size:11px">the long bar moves left</text>
+<text class="tx tx-muted" x="20" y="215" text-anchor="start" style="font-size:11px">Bar length is where calendar time goes, not effort. The total shrinks, and the human share moves into the spec and the verification.</text>
+<text class="tx tx-muted" x="20" y="232" text-anchor="start" style="font-size:11px">Skip the spec and you get &#x27;vibe coding&#x27;: fast, fun, and unverifiable.</text>
+</svg></div><figcaption>The top row is the shape most teams grew up with. The bottom row is the shape when an agent implements: the spec and the verification absorb the time that coding used to take.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask the learner where their team's calendar goes today. Then ask: if coding took one hour, what would you need to have written down first? That list is the spec. Contrast with vibe coding, where you prompt, look, prompt again, and never write anything down.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>The PM's writing is now directly executable. Ambiguity that engineers used to resolve in conversation now becomes wrong code.</li><li>Speed shifts the risk from 'will it ship' to 'did we build the right thing'. Verification against the spec is the control.</li><li>Vibe coding is fine for throwaway prototypes and dangerous for anything that lives. Know which one you are doing.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Martin Fowler's site groups the current tools into a shared shape: a specification phase, a plan or design phase, a task breakdown, and implementation by an agent with checks. GitHub Spec Kit, Amazon's Kiro, and Tessl are the named examples; Claude Code's plan mode and project memory support the same shape without a dedicated framework. The common thread is that the spec is a living file in the repository, versioned with the code, rather than a document that goes stale after kickoff.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>coding agent</strong> is an AI tool that can read and edit files, run commands, and iterate on its own work (Claude Code, Cursor, Copilot's agent mode). A <strong>repository</strong> (repo) is the version-controlled folder that holds a project's code and, increasingly, its specs. <strong>Vibe coding</strong> is prompting an agent to build something by feel, without a written spec or tests.</p></div></details>
+</div></section>
+<section class="lesson" id="loop">
+<div class="lesson-head"><span class="num">02</span><h2>Spec-driven development is a seven-step loop with two ways back</h2></div>
+<p class="thesis">People state intent and write the spec. The agent proposes a plan and a task list, which people approve. The agent implements. Verification checks the result against the spec's acceptance criteria, and failures go back either to the spec or to the code, never silently into production.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="The spec-driven loop: intent, spec, plan, tasks, implement by agent, verify against spec, ship; with loops back from verify to spec and to implement" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="16" y="100" width="96" height="60" rx="10"/>
+<text class="tx tx-human" x="64.0" y="134.68" text-anchor="middle" style="font-size:13px;font-weight:600">Intent</text>
+<text class="tx tx-muted" x="64" y="178" text-anchor="middle" style="font-size:10px">the problem, in a breath</text>
+<circle class="st st-neutral" cx="20" cy="104" r="9"/>
+<text class="tx tx-on" x="20" y="108" text-anchor="middle" style="font-size:11px;font-weight:700">1</text>
+<line class="ln ln-neutral" x1="112" y1="130" x2="112.0" y2="130.0"/>
+<polygon class="ah ah-neutral" points="120.0,130.0 111.0,134.5 111.0,125.5"/>
+<rect class="bx bx-human" x="122" y="100" width="96" height="60" rx="10"/>
+<text class="tx tx-human" x="170.0" y="134.68" text-anchor="middle" style="font-size:13px;font-weight:600">Spec</text>
+<text class="tx tx-muted" x="170" y="194" text-anchor="middle" style="font-size:10px">what, why, criteria</text>
+<circle class="st st-neutral" cx="126" cy="104" r="9"/>
+<text class="tx tx-on" x="126" y="108" text-anchor="middle" style="font-size:11px;font-weight:700">2</text>
+<line class="ln ln-neutral" x1="218" y1="130" x2="218.0" y2="130.0"/>
+<polygon class="ah ah-neutral" points="226.0,130.0 217.0,134.5 217.0,125.5"/>
+<rect class="bx bx-model" x="228" y="100" width="96" height="60" rx="10"/>
+<text class="tx tx-model" x="276.0" y="134.68" text-anchor="middle" style="font-size:13px;font-weight:600">Plan</text>
+<text class="tx tx-muted" x="276" y="178" text-anchor="middle" style="font-size:10px">how: design, trade-offs</text>
+<circle class="st st-neutral" cx="232" cy="104" r="9"/>
+<text class="tx tx-on" x="232" y="108" text-anchor="middle" style="font-size:11px;font-weight:700">3</text>
+<line class="ln ln-neutral" x1="324" y1="130" x2="324.0" y2="130.0"/>
+<polygon class="ah ah-neutral" points="332.0,130.0 323.0,134.5 323.0,125.5"/>
+<rect class="bx bx-data" x="334" y="100" width="96" height="60" rx="10"/>
+<text class="tx tx-data" x="382.0" y="134.68" text-anchor="middle" style="font-size:13px;font-weight:600">Tasks</text>
+<text class="tx tx-muted" x="382" y="194" text-anchor="middle" style="font-size:10px">small, ordered, testable</text>
+<circle class="st st-neutral" cx="338" cy="104" r="9"/>
+<text class="tx tx-on" x="338" y="108" text-anchor="middle" style="font-size:11px;font-weight:700">4</text>
+<line class="ln ln-neutral" x1="430" y1="130" x2="430.0" y2="130.0"/>
+<polygon class="ah ah-neutral" points="438.0,130.0 429.0,134.5 429.0,125.5"/>
+<rect class="bx bx-model" x="440" y="100" width="96" height="60" rx="10"/>
+<text class="tx tx-model" x="488.0" y="134.68" text-anchor="middle" style="font-size:13px;font-weight:600">Implement</text>
+<text class="tx tx-muted" x="488" y="178" text-anchor="middle" style="font-size:10px">agent writes code + tests</text>
+<circle class="st st-neutral" cx="444" cy="104" r="9"/>
+<text class="tx tx-on" x="444" y="108" text-anchor="middle" style="font-size:11px;font-weight:700">5</text>
+<line class="ln ln-neutral" x1="536" y1="130" x2="536.0" y2="130.0"/>
+<polygon class="ah ah-neutral" points="544.0,130.0 535.0,134.5 535.0,125.5"/>
+<rect class="bx bx-tool" x="546" y="100" width="96" height="60" rx="10"/>
+<text class="tx tx-tool" x="594.0" y="134.68" text-anchor="middle" style="font-size:13px;font-weight:600">Verify</text>
+<text class="tx tx-muted" x="594" y="194" text-anchor="middle" style="font-size:10px">criteria met? tests pass?</text>
+<circle class="st st-neutral" cx="550" cy="104" r="9"/>
+<text class="tx tx-on" x="550" y="108" text-anchor="middle" style="font-size:11px;font-weight:700">6</text>
+<line class="ln ln-neutral" x1="642" y1="130" x2="642.0" y2="130.0"/>
+<polygon class="ah ah-neutral" points="650.0,130.0 641.0,134.5 641.0,125.5"/>
+<rect class="bx bx-tool" x="652" y="100" width="96" height="60" rx="10"/>
+<text class="tx tx-tool" x="700.0" y="134.68" text-anchor="middle" style="font-size:13px;font-weight:600">Ship</text>
+<text class="tx tx-muted" x="700" y="178" text-anchor="middle" style="font-size:10px">PR, review, deploy</text>
+<circle class="st st-neutral" cx="656" cy="104" r="9"/>
+<text class="tx tx-on" x="656" y="108" text-anchor="middle" style="font-size:11px;font-weight:700">7</text>
+<text class="tx tx-human caps" x="160" y="46" text-anchor="middle" style="font-size:11px;font-weight:600">people decide</text>
+<text class="tx tx-model caps" x="410" y="46" text-anchor="middle" style="font-size:11px;font-weight:600">agent proposes, people approve</text>
+<text class="tx tx-tool caps" x="650" y="46" text-anchor="middle" style="font-size:11px;font-weight:600">machines check</text>
+<line class="ln ln-faint" x1="16" y1="58" x2="230" y2="58"/><line class="ln ln-faint" x1="234" y1="58" x2="560" y2="58"/><line class="ln ln-faint" x1="568" y1="58" x2="748" y2="58"/>
+<polyline class="ln ln-human" points="594,160 594,230 170,230 170.0,170.0" fill="none"/>
+<polygon class="ah ah-human" points="170.0,162.0 174.5,171.0 165.5,171.0"/>
+<text class="tx tx-muted halo" x="380" y="222" text-anchor="middle" style="font-size:11px">criteria were wrong or missing → fix the spec</text>
+<polyline class="ln ln-model dashed" points="620,160 620,262 500,262 500.0,170.0" fill="none"/>
+<polygon class="ah ah-model" points="500.0,162.0 504.5,171.0 495.5,171.0"/>
+<text class="tx tx-muted halo" x="560" y="254" text-anchor="middle" style="font-size:11px">code is wrong → agent fixes</text>
+</svg></div><figcaption>The three bands above the boxes are the division of labour. The two return arrows are the whole point: a failed check tells you whether the spec or the code was wrong, and each has a different fix.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Walk the loop with a small feature the learner knows. Stop at step 6 and ask: what would 'verified' mean here? If they cannot answer, the spec is missing acceptance criteria, which is the most common gap.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Your leverage is steps 1, 2, and the approval in 3. Spend your time there.</li><li>Insist on step 6. An agent that says 'done' is reporting, not verifying; the check has to be independent of the thing that wrote the code.</li><li>The return arrows are your learning loop. Track how often a failure was a spec problem versus a code problem; it tells you where to invest.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>In GitHub Spec Kit the phases are literally commands: specify, plan, tasks, implement. Kiro produces three files per feature: requirements (with acceptance criteria in a given/when/then style), design, and tasks. Claude Code's plan mode separates proposing from doing: the agent explores and writes a plan, the person approves, then the agent executes. In all of them the artefacts live in the repo next to the code and are reviewed like code. The Claude Code for PMs course frames the same idea for non-engineers: interview the person to build a requirements file before touching code (lesson 4.2, 'think of it like briefing a contractor').</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>pull request</strong> (PR) is a proposed change to a repository that others review before it is merged. <strong>Acceptance criteria</strong> are the specific, checkable conditions that mean a requirement is met. A <strong>task</strong> here is a unit of work small enough for an agent to finish and test in one go.</p></div></details>
+</div></section>
+<section class="lesson" id="spec-anatomy">
+<div class="lesson-head"><span class="num">03</span><h2>A good spec has eight parts, and an agent uses every one of them differently</h2></div>
+<p class="thesis">A spec is not a longer prompt. Each section answers a distinct question, and the two sections PMs most often skip, non-goals and acceptance criteria, are the ones an agent depends on most: one fences the scope, the other becomes the tests.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 360" role="img" aria-label="A specification document as stacked sections, each annotated with what the agent uses it for" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="20" y="24" width="330" height="34" rx="10"/>
+<text class="tx tx-human" x="185.0" y="45.32" text-anchor="middle" style="font-size:12px;font-weight:600">Problem &amp; why now</text>
+<text class="tx tx-muted" x="360" y="45" text-anchor="start" style="font-size:11px">the decision the reader should make</text>
+<text class="tx tx-human" x="748" y="45" text-anchor="end" style="font-size:10.5px">anchors every trade-off the agent makes</text>
+<rect class="bx bx-human" x="20" y="64" width="330" height="34" rx="10"/>
+<text class="tx tx-human" x="185.0" y="85.32" text-anchor="middle" style="font-size:12px;font-weight:600">Users &amp; scenarios</text>
+<text class="tx tx-muted" x="360" y="85" text-anchor="start" style="font-size:11px">who, doing what, in what situation</text>
+<text class="tx tx-human" x="748" y="85" text-anchor="end" style="font-size:10.5px">personas the agent designs for</text>
+<rect class="bx bx-data" x="20" y="104" width="330" height="34" rx="10"/>
+<text class="tx tx-data" x="185.0" y="125.32" text-anchor="middle" style="font-size:12px;font-weight:600">Goals &amp; success metrics</text>
+<text class="tx tx-muted" x="360" y="125" text-anchor="start" style="font-size:11px">measurable outcomes and guardrails</text>
+<text class="tx tx-data" x="748" y="125" text-anchor="end" style="font-size:10.5px">what &#x27;better&#x27; means; becomes the eval</text>
+<rect class="bx bx-risk" x="20" y="144" width="330" height="34" rx="10"/>
+<text class="tx tx-risk" x="185.0" y="165.32" text-anchor="middle" style="font-size:12px;font-weight:600">Non-goals</text>
+<text class="tx tx-muted" x="360" y="165" text-anchor="start" style="font-size:11px">what we are explicitly not doing</text>
+<text class="tx tx-risk" x="748" y="165" text-anchor="end" style="font-size:10.5px">the fence that stops scope creep</text>
+<rect class="bx bx-data" x="20" y="184" width="330" height="34" rx="10"/>
+<text class="tx tx-data" x="185.0" y="205.32" text-anchor="middle" style="font-size:12px;font-weight:600">Requirements</text>
+<text class="tx tx-muted" x="360" y="205" text-anchor="start" style="font-size:11px">functional and non-functional</text>
+<text class="tx tx-data" x="748" y="205" text-anchor="end" style="font-size:10.5px">the checklist the plan must cover</text>
+<rect class="bx bx-tool" x="20" y="224" width="330" height="34" rx="10"/>
+<text class="tx tx-tool" x="185.0" y="245.32" text-anchor="middle" style="font-size:12px;font-weight:600">Acceptance criteria</text>
+<text class="tx tx-muted" x="360" y="245" text-anchor="start" style="font-size:11px">given / when / then, checkable</text>
+<text class="tx tx-tool" x="748" y="245" text-anchor="end" style="font-size:10.5px">turned directly into tests</text>
+<rect class="bx bx-tool" x="20" y="264" width="330" height="34" rx="10"/>
+<text class="tx tx-tool" x="185.0" y="285.32" text-anchor="middle" style="font-size:12px;font-weight:600">Constraints &amp; dependencies</text>
+<text class="tx tx-muted" x="360" y="285" text-anchor="start" style="font-size:11px">systems, policies, deadlines</text>
+<text class="tx tx-tool" x="748" y="285" text-anchor="end" style="font-size:10.5px">limits the design space</text>
+<rect class="bx bx-human" x="20" y="304" width="330" height="34" rx="10"/>
+<text class="tx tx-human" x="185.0" y="325.32" text-anchor="middle" style="font-size:12px;font-weight:600">Open questions</text>
+<text class="tx tx-muted" x="360" y="325" text-anchor="start" style="font-size:11px">decisions still pending, with owners</text>
+<text class="tx tx-human" x="748" y="325" text-anchor="end" style="font-size:10.5px">where the agent should ask, not guess</text>
+<text class="tx tx-muted" x="360" y="350" text-anchor="middle" style="font-size:10.5px">left: the section  ·  middle: what it says  ·  right: what the agent does with it</text>
+</svg></div><figcaption>Sections in the order a reader needs them. This merges the structure of a PM specification document with Lenny Rachitsky's and Carl Vellotti's PRD templates, trimmed to what an implementing agent can act on.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Show the learner a real PRD and tick off the eight sections. The usual finding is that non-goals and acceptance criteria are missing or vague. Rewrite one requirement as a given/when/then criterion together.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Non-goals are the cheapest control you have over an agent. Without them, the agent will helpfully build things you did not ask for.</li><li>Acceptance criteria are where product and engineering meet. If you cannot write the check, the requirement is not ready.</li><li>Open questions with owners keep the agent from guessing. An agent that asks is worth more than one that assumes.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>From Carl's template: problem and opportunity, high-level approach and alternatives considered, narrative, goals (measurable and not), non-goals with reasons, key features as the perimeter of the solution, and open questions. From Lenny's: description, problem, why now, success, audience, what it looks like, experiment plan, milestones. The PM specification structure adds risks and mitigations, timeline, and communication plan; those stay in the PRD and are not needed by the agent. <strong>Non-functional requirements</strong> (latency, security, accessibility, cost) are where agents most often need explicit numbers, because the code will silently pick a default otherwise.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>PRD</strong> is a product requirements document. <strong>Given / when / then</strong> is a way to write a testable criterion: given a state, when an action happens, then an outcome is observed. A <strong>non-functional requirement</strong> describes how well the system must work (speed, reliability) rather than what it does.</p></div></details>
+</div></section>
+<section class="lesson" id="spec-pyramid">
+<div class="lesson-head"><span class="num">04</span><h2>Three documents, three owners, one chain from why to steps</h2></div>
+<p class="thesis">The PRD says why and what; the technical design says how; the task list says what to do first. Each layer is derived from the one above and reviewed by a different person. Agents are good at drafting downward and bad at inventing upward.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 290" role="img" aria-label="A three-tier pyramid: PRD at the top answering why and what, technical design in the middle answering how, and a task list at the bottom listing steps; owners and detail level on the sides" xmlns="http://www.w3.org/2000/svg">
+<polygon class="bx bx-human" points="380,30 480,110 280,110"/>
+<polygon class="bx bx-model" points="270,120 490,120 560,200 200,200"/>
+<polygon class="bx bx-data" points="190,210 570,210 640,270 120,270"/>
+<text class="tx" x="380" y="78" text-anchor="middle" style="font-size:13px;font-weight:700">PRD</text>
+<text class="tx tx-muted" x="380" y="96" text-anchor="middle" style="font-size:11px">why and what</text>
+<text class="tx" x="380" y="156" text-anchor="middle" style="font-size:13px;font-weight:700">Technical design</text>
+<text class="tx tx-muted" x="380" y="174" text-anchor="middle" style="font-size:11px">how: architecture, data, interfaces, trade-offs</text>
+<text class="tx" x="380" y="240" text-anchor="middle" style="font-size:13px;font-weight:700">Task list</text>
+<text class="tx tx-muted" x="380" y="258" text-anchor="middle" style="font-size:11px">ordered, small, each with its own test</text>
+<text class="tx tx-muted caps" x="30" y="78" text-anchor="start" style="font-size:11px;font-weight:600">Owner</text>
+<text class="tx" x="30" y="98" text-anchor="start" style="font-size:11px">Product lead writes,</text>
+<text class="tx tx-muted" x="30" y="112" text-anchor="start" style="font-size:11px">agent drafts sections</text>
+<text class="tx" x="30" y="160" text-anchor="start" style="font-size:11px">Engineer or architect</text>
+<text class="tx tx-muted" x="30" y="174" text-anchor="start" style="font-size:11px">reviews; agent proposes</text>
+<text class="tx" x="30" y="240" text-anchor="start" style="font-size:11px">Agent generates;</text>
+<text class="tx tx-muted" x="30" y="254" text-anchor="start" style="font-size:11px">engineer approves order</text>
+<text class="tx tx-muted caps" x="736" y="78" text-anchor="end" style="font-size:11px;font-weight:600">Detail</text>
+<text class="tx" x="736" y="98" text-anchor="end" style="font-size:11px">1 to 3 pages</text>
+<text class="tx" x="736" y="160" text-anchor="end" style="font-size:11px">as long as the trade-offs need</text>
+<text class="tx" x="736" y="240" text-anchor="end" style="font-size:11px">dozens of one-line items</text>
+<line class="ln ln-neutral dashed" x1="750" y1="40" x2="750.0" y2="257.0"/>
+<polygon class="ah ah-neutral" points="750.0,265.0 745.5,256.0 754.5,256.0"/>
+</svg></div><figcaption>Detail grows downward; authority flows downward too. A task that cannot be traced to a requirement is scope creep, and a requirement with no task underneath it will not ship.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask who owns each layer on the learner's team today. In many teams the middle layer is missing (it lives in someone's head), which is exactly what breaks when an agent starts generating tasks.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Own the top layer completely and review the middle layer's trade-offs. Delegate the bottom layer to the agent and check the order.</li><li>Traceability is a management tool: every task links to a criterion, so 'done' rolls up to the PRD automatically.</li><li>Missing middle layers show up as agents making architecture decisions by default. Make the engineer write or review the design before implementation.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Kiro's three files map exactly onto the pyramid (requirements, design, tasks). Spec Kit adds a project 'constitution' above the PRD: standing principles (testing policy, style, security rules) that every spec inherits. In Claude Code the same standing rules live in the project memory file (CLAUDE.md) and the design layer is what plan mode produces. Good task lists follow a pattern: each task names the files it touches, the test that proves it, and the criterion it serves; ordering puts data models and interfaces before behaviour before UI.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>An <strong>architecture</strong> is the set of components in a system and how they talk. An <strong>interface</strong> (API contract) is the agreed shape of a request and response between components. A <strong>data model</strong> is what gets stored and how it relates.</p></div></details>
+</div></section>
+<section class="lesson" id="context">
+<div class="lesson-head"><span class="num">05</span><h2>An agent only knows what you put in front of it, so curating that context is the new setup work</h2></div>
+<p class="thesis">Project memory, company context, the spec, reusable skills, and tool access are the agent's entire world. Teams that maintain these files get consistent, on-brand output; teams that re-explain in every prompt get drift.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 320" role="img" aria-label="A coding agent in the centre receives project memory, company context, the spec, skills, and tools through MCP, and produces a plan, code, and tests; a reviewer approves the plan and reviews the pull request" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-model" x="300" y="130" width="160" height="70" rx="10"/>
+<text class="tx tx-model" x="380.0" y="162.0" text-anchor="middle" style="font-size:13px;font-weight:600">Coding agent</text>
+<text class="tx tx-muted" x="380.0" y="178.0" text-anchor="middle" style="font-size:11px">Claude Code, Cursor...</text>
+<rect class="bx bx-data" x="20" y="18" width="180" height="44" rx="10"/>
+<text class="tx tx-data" x="110.0" y="37.0" text-anchor="middle" style="font-size:12px;font-weight:600">Project memory</text>
+<text class="tx tx-muted" x="110.0" y="53.0" text-anchor="middle" style="font-size:11px">CLAUDE.md: stack, style, rules</text>
+<line class="ln ln-data" x1="200" y1="40" x2="292.3" y2="129.4"/>
+<polygon class="ah ah-data" points="298.0,135.0 288.4,132.0 294.7,125.5"/>
+<rect class="bx bx-data" x="20" y="78" width="180" height="44" rx="10"/>
+<text class="tx tx-data" x="110.0" y="97.0" text-anchor="middle" style="font-size:12px;font-weight:600">Company context</text>
+<text class="tx tx-muted" x="110.0" y="113.0" text-anchor="middle" style="font-size:11px">product, personas, competitors</text>
+<line class="ln ln-data" x1="200" y1="100" x2="290.9" y2="146.4"/>
+<polygon class="ah ah-data" points="298.0,150.0 287.9,149.9 292.0,141.9"/>
+<rect class="bx bx-data" x="20" y="138" width="180" height="44" rx="10"/>
+<text class="tx tx-data" x="110.0" y="157.0" text-anchor="middle" style="font-size:12px;font-weight:600">The spec</text>
+<text class="tx tx-muted" x="110.0" y="173.0" text-anchor="middle" style="font-size:11px">requirements + criteria</text>
+<line class="ln ln-data" x1="200" y1="160" x2="290.0" y2="164.6"/>
+<polygon class="ah ah-data" points="298.0,165.0 288.8,169.0 289.2,160.0"/>
+<rect class="bx bx-tool" x="20" y="198" width="180" height="44" rx="10"/>
+<text class="tx tx-tool" x="110.0" y="217.0" text-anchor="middle" style="font-size:12px;font-weight:600">Skills &amp; commands</text>
+<text class="tx tx-muted" x="110.0" y="233.0" text-anchor="middle" style="font-size:11px">reusable playbooks</text>
+<line class="ln ln-tool" x1="200" y1="220" x2="290.6" y2="183.0"/>
+<polygon class="ah ah-tool" points="298.0,180.0 291.4,187.6 288.0,179.2"/>
+<rect class="bx bx-tool" x="20" y="258" width="180" height="44" rx="10"/>
+<text class="tx tx-tool" x="110.0" y="277.0" text-anchor="middle" style="font-size:12px;font-weight:600">Tools via MCP</text>
+<text class="tx tx-muted" x="110.0" y="293.0" text-anchor="middle" style="font-size:11px">repo, tickets, docs, browser</text>
+<line class="ln ln-tool" x1="200" y1="280" x2="292.0" y2="200.2"/>
+<polygon class="ah ah-tool" points="298.0,195.0 294.1,204.3 288.3,197.5"/>
+<rect class="bx bx-model" x="560" y="60" width="180" height="44" rx="10"/>
+<text class="tx tx-model" x="650.0" y="79.0" text-anchor="middle" style="font-size:12px;font-weight:600">Plan</text>
+<text class="tx tx-muted" x="650.0" y="95.0" text-anchor="middle" style="font-size:11px">for approval</text>
+<rect class="bx bx-tool" x="560" y="140" width="180" height="44" rx="10"/>
+<text class="tx tx-tool" x="650.0" y="159.0" text-anchor="middle" style="font-size:12px;font-weight:600">Code + tests</text>
+<text class="tx tx-muted" x="650.0" y="175.0" text-anchor="middle" style="font-size:11px">in a branch</text>
+<rect class="bx bx-tool" x="560" y="220" width="180" height="44" rx="10"/>
+<text class="tx tx-tool" x="650.0" y="239.0" text-anchor="middle" style="font-size:12px;font-weight:600">Pull request</text>
+<text class="tx tx-muted" x="650.0" y="255.0" text-anchor="middle" style="font-size:11px">for review</text>
+<line class="ln ln-model" x1="460" y1="150" x2="551.3" y2="90.4"/>
+<polygon class="ah ah-model" points="558.0,86.0 552.9,94.7 548.0,87.2"/>
+<line class="ln ln-tool" x1="460" y1="165" x2="550.0" y2="162.2"/>
+<polygon class="ah ah-tool" points="558.0,162.0 549.1,166.8 548.9,157.8"/>
+<line class="ln ln-tool" x1="460" y1="180" x2="551.1" y2="233.9"/>
+<polygon class="ah ah-tool" points="558.0,238.0 548.0,237.3 552.5,229.5"/>
+<rect class="bx bx-human" x="300" y="20" width="160" height="44" rx="10"/>
+<text class="tx tx-human" x="380.0" y="39.0" text-anchor="middle" style="font-size:12px;font-weight:600">Reviewer</text>
+<text class="tx tx-muted" x="380.0" y="55.0" text-anchor="middle" style="font-size:11px">approves plan, reviews PR</text>
+<line class="ln ln-human" x1="380" y1="64" x2="380.0" y2="120.0"/>
+<polygon class="ah ah-human" points="380.0,128.0 375.5,119.0 384.5,119.0"/>
+<text class="tx tx-muted halo" x="380.0" y="92.0" text-anchor="middle" style="font-size:11px">steers</text>
+<line class="ln ln-human dashed" x1="560" y1="82" x2="469.4" y2="45.0"/>
+<polygon class="ah ah-human" points="462.0,42.0 472.0,41.2 468.6,49.6"/>
+<text class="tx" x="380" y="300" text-anchor="middle" style="font-size:11px;font-weight:600">what the agent knows = what you put in front of it; nothing else</text>
+</svg></div><figcaption>Blue inputs are knowledge, green inputs are capabilities. The Claude Code for PMs course builds exactly this set: a CLAUDE.md with product context, personas, and writing style, plus company-context files and slash commands.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Open the course's TaskFlow CLAUDE.md as an example: product context, three personas with quotes, writing style rules. Ask the learner what their equivalent file would contain, and who would keep it current.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Context files are product assets. Personas, positioning, and tone written once are reused by every agent run and every teammate.</li><li>Stale context is worse than none: the agent will confidently apply last year's strategy. Assign an owner and a review cadence.</li><li>Tool access is a permissions decision, the same as for any agent in Module 1. Read before write; write behind review.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>Project memory</strong> (CLAUDE.md or equivalent) holds the durable facts: stack, conventions, commands, what not to touch. <strong>Company context</strong> files hold product, personas, and competitive notes. <strong>Skills and slash commands</strong> package a repeatable workflow (write a PRD using these templates, review with three personas). <strong>Subagents</strong> are specialised agents with their own context (an engineer reviewer, an executive reviewer, a user researcher in the course). Together this is 'context engineering': deciding what goes into the context window, in what form, at what time. Raviv and Khan name context rot, the degradation as the window fills, as the reason to keep context lean and structured.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>context window</strong> is the amount of text a model can see at once (Module 1). A <strong>slash command</strong> is a saved prompt invoked by name. <strong>Markdown</strong> is the plain-text format these files are written in; a heading is a line starting with #.</p></div></details>
+</div></section>
+<section class="lesson" id="tools">
+<div class="lesson-head"><span class="num">06</span><h2>The tools are interchangeable; the stages are not</h2></div>
+<p class="thesis">Every SDD tool serves one or more of the four stages. Some frameworks cover the whole loop; general-purpose agents cover it with a couple of conventions. Pick for the stage you are weakest at, and expect the list to change every six months.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="The SDD loop stages across the top with the tools that serve each stage listed underneath" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="16" y="30" width="172" height="44" rx="10"/>
+<text class="tx tx-human" x="102.0" y="56.68" text-anchor="middle" style="font-size:13px;font-weight:600">Intent &amp; spec</text>
+<line class="ln ln-neutral" x1="188" y1="52" x2="194.0" y2="52.0"/>
+<polygon class="ah ah-neutral" points="202.0,52.0 193.0,56.5 193.0,47.5"/>
+<rect class="bx bx-neutral" x="16" y="96" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="102.0" y="119.96" text-anchor="middle" style="font-size:11px">Claude / ChatGPT for drafting</text>
+<rect class="bx bx-neutral" x="16" y="148" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="102.0" y="171.96" text-anchor="middle" style="font-size:11px">PRD templates (Lenny, Carl)</text>
+<rect class="bx bx-neutral" x="16" y="200" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="102.0" y="223.96" text-anchor="middle" style="font-size:11px">Claude Design for prototypes</text>
+<rect class="bx bx-model" x="202" y="30" width="172" height="44" rx="10"/>
+<text class="tx tx-model" x="288.0" y="56.68" text-anchor="middle" style="font-size:13px;font-weight:600">Plan &amp; tasks</text>
+<line class="ln ln-neutral" x1="374" y1="52" x2="380.0" y2="52.0"/>
+<polygon class="ah ah-neutral" points="388.0,52.0 379.0,56.5 379.0,47.5"/>
+<rect class="bx bx-neutral" x="202" y="96" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="288.0" y="119.96" text-anchor="middle" style="font-size:11px">Claude Code plan mode</text>
+<rect class="bx bx-neutral" x="202" y="148" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="288.0" y="171.96" text-anchor="middle" style="font-size:11px">GitHub Spec Kit</text>
+<rect class="bx bx-neutral" x="202" y="200" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="288.0" y="223.96" text-anchor="middle" style="font-size:11px">Kiro specs</text>
+<rect class="bx bx-model" x="388" y="30" width="172" height="44" rx="10"/>
+<text class="tx tx-model" x="474.0" y="56.68" text-anchor="middle" style="font-size:13px;font-weight:600">Implement</text>
+<line class="ln ln-neutral" x1="560" y1="52" x2="566.0" y2="52.0"/>
+<polygon class="ah ah-neutral" points="574.0,52.0 565.0,56.5 565.0,47.5"/>
+<rect class="bx bx-neutral" x="388" y="96" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="474.0" y="119.96" text-anchor="middle" style="font-size:11px">Claude Code</text>
+<rect class="bx bx-neutral" x="388" y="148" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="474.0" y="171.96" text-anchor="middle" style="font-size:11px">Cursor</text>
+<rect class="bx bx-neutral" x="388" y="200" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="474.0" y="223.96" text-anchor="middle" style="font-size:11px">Copilot agent mode</text>
+<rect class="bx bx-tool" x="574" y="30" width="172" height="44" rx="10"/>
+<text class="tx tx-tool" x="660.0" y="56.68" text-anchor="middle" style="font-size:13px;font-weight:600">Verify &amp; ship</text>
+<rect class="bx bx-neutral" x="574" y="96" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="660.0" y="119.96" text-anchor="middle" style="font-size:11px">Tests in CI (GitHub Actions)</text>
+<rect class="bx bx-neutral" x="574" y="148" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="660.0" y="171.96" text-anchor="middle" style="font-size:11px">Eval suites for AI features</text>
+<rect class="bx bx-neutral" x="574" y="200" width="172" height="40" rx="8"/>
+<text class="tx tx-neutral" x="660.0" y="223.96" text-anchor="middle" style="font-size:11px">PR review, staged deploy</text>
+<text class="tx tx-muted" x="380" y="280" text-anchor="middle" style="font-size:11px">the same person can run all four stages from one terminal; the stages, not the tools, are what matter</text>
+</svg></div><figcaption>Tools that exist today, placed by stage. The prototype tool (Claude Design) sits under intent because a clickable prototype is a spec people can react to.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Do not teach tool features. Teach the learner to ask, for any new tool, which stage it serves and what artefact it leaves behind in the repo. Tools that leave nothing behind are for exploration only.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Choose tools that write their artefacts into the repo. A spec inside a chat window is not a spec.</li><li>Prototype tools compress the intent stage: a Duolingo team reports going from spec to an interactive HTML prototype with one-click handoff to the coding agent.</li><li>Standardise the stages across teams, not the tools. Teams can differ on editors and still share PRD, design, and task conventions.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p><strong>GitHub Spec Kit</strong>: an open-source CLI and templates with specify / plan / tasks / implement commands, working with many agents (Claude Code, Copilot, Cursor, Gemini CLI, Kiro and others). <strong>Kiro</strong>: Amazon's agentic IDE with specs as a first-class feature, generating requirements, design, and tasks files. <strong>Claude Code</strong>: plan mode for the design step, CLAUDE.md for memory, subagents and skills for reuse, and the ability to run tests and open pull requests. <strong>Claude Design</strong>: HTML-first prototyping grounded in a design system, with comments, in-place edits, and export to Claude Code as a zip with a README. <strong>Claude Cowork</strong>: the non-terminal path for non-technical teammates to run multi-step tasks on files.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>CLI</strong> is a command-line interface, a tool you drive by typing commands. An <strong>IDE</strong> is an integrated development environment, the editor engineers work in. <strong>CI</strong> (continuous integration) runs tests automatically on every change; <strong>GitHub Actions</strong> is one such service.</p></div></details>
+</div></section>
+<section class="lesson" id="criteria-tests">
+<div class="lesson-head"><span class="num">07</span><h2>Acceptance criteria are executable: write them so a test can check them</h2></div>
+<p class="thesis">For ordinary features the criterion becomes a test the agent must make pass. For AI features it becomes an eval set with a pass-rate bar. Either way, 'done' is decided by a check the implementer did not write, and the PM wrote the criterion that check enforces.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 300" role="img" aria-label="Acceptance criteria become test cases; the agent implements and runs tests, looping on red until green, then opens a pull request; a parallel lane shows eval sets scoring AI features" xmlns="http://www.w3.org/2000/svg">
+<rect class="fr fr-neutral" x="10" y="10" width="740" height="150" rx="14"/>
+<text class="tx tx-neutral caps" x="22" y="28" text-anchor="start" style="font-size:11px;font-weight:600">Deterministic features</text>
+<rect class="bx bx-data" x="24" y="60" width="140" height="56" rx="10"/>
+<text class="tx tx-data" x="94.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Acceptance criterion</text>
+<text class="tx tx-muted" x="94.0" y="101.0" text-anchor="middle" style="font-size:11px">given / when / then</text>
+<rect class="bx bx-tool" x="184" y="60" width="110" height="56" rx="10"/>
+<text class="tx tx-tool" x="239.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Test case</text>
+<text class="tx tx-muted" x="239.0" y="101.0" text-anchor="middle" style="font-size:11px">written first</text>
+<rect class="bx bx-model" x="314" y="60" width="130" height="56" rx="10"/>
+<text class="tx tx-model" x="379.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Agent implements</text>
+<text class="tx tx-muted" x="379.0" y="101.0" text-anchor="middle" style="font-size:11px">until tests pass</text>
+<rect class="bx bx-tool" x="464" y="60" width="110" height="56" rx="10"/>
+<text class="tx tx-tool" x="519.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Run tests</text>
+<text class="tx tx-muted" x="519.0" y="101.0" text-anchor="middle" style="font-size:11px">in CI</text>
+<rect class="bx bx-human" x="614" y="60" width="120" height="56" rx="10"/>
+<text class="tx tx-human" x="674.0" y="85.0" text-anchor="middle" style="font-size:12px;font-weight:600">Pull request</text>
+<text class="tx tx-muted" x="674.0" y="101.0" text-anchor="middle" style="font-size:11px">person reviews</text>
+<line class="ln ln-neutral" x1="164" y1="88" x2="174.0" y2="88.0"/>
+<polygon class="ah ah-neutral" points="182.0,88.0 173.0,92.5 173.0,83.5"/>
+<line class="ln ln-neutral" x1="294" y1="88" x2="304.0" y2="88.0"/>
+<polygon class="ah ah-neutral" points="312.0,88.0 303.0,92.5 303.0,83.5"/>
+<line class="ln ln-neutral" x1="444" y1="88" x2="454.0" y2="88.0"/>
+<polygon class="ah ah-neutral" points="462.0,88.0 453.0,92.5 453.0,83.5"/>
+<line class="ln ln-tool" x1="574" y1="88" x2="604.0" y2="88.0"/>
+<polygon class="ah ah-tool" points="612.0,88.0 603.0,92.5 603.0,83.5"/>
+<text class="tx tx-muted halo" x="593.0" y="82.0" text-anchor="middle" style="font-size:11px">green</text>
+<polyline class="ln ln-risk" points="519,116 519,140 379,140 379.0,126.0" fill="none"/>
+<polygon class="ah ah-risk" points="379.0,118.0 383.5,127.0 374.5,127.0"/>
+<text class="tx tx-muted halo" x="449" y="134" text-anchor="middle" style="font-size:11px">red → fix</text>
+<rect class="fr fr-neutral" x="10" y="170" width="740" height="120" rx="14"/>
+<text class="tx tx-neutral caps" x="22" y="188" text-anchor="start" style="font-size:11px;font-weight:600">AI features (probabilistic)</text>
+<rect class="bx bx-data" x="24" y="212" width="140" height="56" rx="10"/>
+<text class="tx tx-data" x="94.0" y="237.0" text-anchor="middle" style="font-size:12px;font-weight:600">Quality criterion</text>
+<text class="tx tx-muted" x="94.0" y="253.0" text-anchor="middle" style="font-size:11px">&#x27;answers cite a source&#x27;</text>
+<rect class="bx bx-tool" x="184" y="212" width="110" height="56" rx="10"/>
+<text class="tx tx-tool" x="239.0" y="237.0" text-anchor="middle" style="font-size:12px;font-weight:600">Eval set</text>
+<text class="tx tx-muted" x="239.0" y="253.0" text-anchor="middle" style="font-size:11px">inputs + expected</text>
+<rect class="bx bx-model" x="314" y="212" width="130" height="56" rx="10"/>
+<text class="tx tx-model" x="379.0" y="237.0" text-anchor="middle" style="font-size:12px;font-weight:600">Agent tunes</text>
+<text class="tx tx-muted" x="379.0" y="253.0" text-anchor="middle" style="font-size:11px">prompt, retrieval</text>
+<rect class="bx bx-tool" x="464" y="212" width="110" height="56" rx="10"/>
+<text class="tx tx-tool" x="519.0" y="237.0" text-anchor="middle" style="font-size:12px;font-weight:600">Score</text>
+<text class="tx tx-muted" x="519.0" y="253.0" text-anchor="middle" style="font-size:11px">pass rate</text>
+<rect class="bx bx-human" x="614" y="212" width="120" height="56" rx="10"/>
+<text class="tx tx-human" x="674.0" y="237.0" text-anchor="middle" style="font-size:12px;font-weight:600">Ship gate</text>
+<text class="tx tx-muted" x="674.0" y="253.0" text-anchor="middle" style="font-size:11px">score ≥ bar</text>
+<line class="ln ln-neutral" x1="164" y1="240" x2="174.0" y2="240.0"/>
+<polygon class="ah ah-neutral" points="182.0,240.0 173.0,244.5 173.0,235.5"/>
+<line class="ln ln-neutral" x1="294" y1="240" x2="304.0" y2="240.0"/>
+<polygon class="ah ah-neutral" points="312.0,240.0 303.0,244.5 303.0,235.5"/>
+<line class="ln ln-neutral" x1="444" y1="240" x2="454.0" y2="240.0"/>
+<polygon class="ah ah-neutral" points="462.0,240.0 453.0,244.5 453.0,235.5"/>
+<line class="ln ln-tool" x1="574" y1="240" x2="604.0" y2="240.0"/>
+<polygon class="ah ah-tool" points="612.0,240.0 603.0,244.5 603.0,235.5"/>
+</svg></div><figcaption>Top lane: test-first development with an agent doing the implementing. Bottom lane: the same discipline for probabilistic features, where a single test cannot capture 'good' but a scored set can.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Take one requirement from the learner's backlog and write the criterion, then say out loud what the test would do. If it needs the word 'reasonable' or 'appropriate', it is not yet a criterion. For an AI feature, write three eval cases instead.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>This is the strongest lever a PM has over agent output: the criteria you write are the checks that will run.</li><li>Test-first with an agent is cheap. The agent writes the test from the criterion, then writes code until it passes; you review both.</li><li>For AI features, agree the pass-rate bar before building. It is the launch decision, made in advance.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Test-driven development with agents: the agent writes a failing test that encodes the criterion, implements, runs, and iterates; humans review the test as carefully as the code, because an agent can also weaken a test to make it pass. <strong>Contract tests</strong> pin interfaces between components. <strong>Property-based tests</strong> generate many inputs and check invariants. For AI features, evals use exact match, rubric grading by a stronger model with spot checks, or human review on samples, and they run in CI like tests so a prompt change that lowers the score blocks the merge. ByteByteGo's 'Good Code vs Bad Code' argues that readability and testability are what keep a codebase changeable, which matters more, not less, when an agent is the one changing it.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>unit test</strong> checks one small piece of code in isolation; an <strong>integration test</strong> checks pieces working together. <strong>Red / green</strong> refers to failing and passing tests. A <strong>merge</strong> puts a reviewed change into the main codebase.</p></div></details>
+</div></section>
+<section class="lesson" id="checkpoints">
+<div class="lesson-head"><span class="num">08</span><h2>Three human gates and two automated gates keep speed from turning into risk</h2></div>
+<p class="thesis">People decide the problem, the approach, and whether the code is right. Machines decide whether it passes and whether it is safe to roll out. Removing a human gate is a risk decision; removing an automated gate is a mistake.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 250" role="img" aria-label="Delivery pipeline with checkpoints: spec review, plan review, pull request review are human gates; CI and staged deployment are automated gates; monitoring follows" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="16" y="90" width="96" height="60" rx="10"/>
+<text class="tx tx-human" x="64.0" y="117.0" text-anchor="middle" style="font-size:12px;font-weight:600">Spec review</text>
+<text class="tx tx-muted" x="64.0" y="133.0" text-anchor="middle" style="font-size:11px">right problem?</text>
+<line class="ln ln-neutral" x1="112" y1="120" x2="112.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="120.0,120.0 111.0,124.5 111.0,115.5"/>
+<rect class="bx bx-human" x="122" y="90" width="96" height="60" rx="10"/>
+<text class="tx tx-human" x="170.0" y="117.0" text-anchor="middle" style="font-size:12px;font-weight:600">Plan review</text>
+<text class="tx tx-muted" x="170.0" y="133.0" text-anchor="middle" style="font-size:11px">right approach?</text>
+<line class="ln ln-neutral" x1="218" y1="120" x2="218.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="226.0,120.0 217.0,124.5 217.0,115.5"/>
+<rect class="bx bx-model" x="228" y="90" width="96" height="60" rx="10"/>
+<text class="tx tx-model" x="276.0" y="117.0" text-anchor="middle" style="font-size:12px;font-weight:600">Agent builds</text>
+<text class="tx tx-muted" x="276.0" y="133.0" text-anchor="middle" style="font-size:11px">code + tests</text>
+<line class="ln ln-neutral" x1="324" y1="120" x2="324.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="332.0,120.0 323.0,124.5 323.0,115.5"/>
+<rect class="bx bx-human" x="334" y="90" width="96" height="60" rx="10"/>
+<text class="tx tx-human" x="382.0" y="117.0" text-anchor="middle" style="font-size:12px;font-weight:600">PR review</text>
+<text class="tx tx-muted" x="382.0" y="133.0" text-anchor="middle" style="font-size:11px">right code?</text>
+<line class="ln ln-neutral" x1="430" y1="120" x2="430.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="438.0,120.0 429.0,124.5 429.0,115.5"/>
+<rect class="bx bx-tool" x="440" y="90" width="96" height="60" rx="10"/>
+<text class="tx tx-tool" x="488.0" y="117.0" text-anchor="middle" style="font-size:12px;font-weight:600">CI gate</text>
+<text class="tx tx-muted" x="488.0" y="133.0" text-anchor="middle" style="font-size:11px">tests + evals pass?</text>
+<line class="ln ln-neutral" x1="536" y1="120" x2="536.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="544.0,120.0 535.0,124.5 535.0,115.5"/>
+<rect class="bx bx-tool" x="546" y="90" width="96" height="60" rx="10"/>
+<text class="tx tx-tool" x="594.0" y="117.0" text-anchor="middle" style="font-size:12px;font-weight:600">Staged deploy</text>
+<text class="tx tx-muted" x="594.0" y="133.0" text-anchor="middle" style="font-size:11px">canary, then all</text>
+<line class="ln ln-neutral" x1="642" y1="120" x2="642.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="650.0,120.0 641.0,124.5 641.0,115.5"/>
+<rect class="bx bx-tool" x="652" y="90" width="96" height="60" rx="10"/>
+<text class="tx tx-tool" x="700.0" y="117.0" text-anchor="middle" style="font-size:12px;font-weight:600">Monitor</text>
+<text class="tx tx-muted" x="700.0" y="133.0" text-anchor="middle" style="font-size:11px">did it work?</text>
+<text class="tx tx-muted" x="16" y="60" text-anchor="start" style="font-size:11px">each gate asks one question; a &#x27;no&#x27; goes back one step, not to the start</text>
+<polyline class="ln ln-data dashed" points="700,150 700,200 64,200 64.0,160.0" fill="none"/>
+<polygon class="ah ah-data" points="64.0,152.0 68.5,161.0 59.5,161.0"/>
+<text class="tx tx-muted halo" x="380" y="192" text-anchor="middle" style="font-size:11px">what we learn in production feeds the next spec</text>
+<text class="tx tx-muted" x="16" y="232" text-anchor="start" style="font-size:11px">orange gates are judgement calls a person owns; green gates are automated and should be boring</text>
+</svg></div><figcaption>The pipeline shape most mature teams converge on. The three orange gates are where product and engineering judgement lives; everything green is ByteByteGo's CI/CD discipline applied to agent-written code.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask which gate the learner would remove to go faster, and what could go wrong. Spec review is the one teams most often skip and most often regret. Emphasise that PR review of agent code is a real skill: reviewers read for intent, not syntax.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Decide the gates per risk tier. A marketing page can skip plan review; a payments change cannot.</li><li>PR review of agent-written code is where engineering time goes now. Budget for it and train for it.</li><li>Monitoring closes the loop back to the spec. The next spec should cite what the last one taught you.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>From the CI/CD source: continuous delivery keeps every change deployable and promotes through environments (QA, staging, production) with checks at each; continuous deployment automates the last step. Staged rollouts (canaries, feature flags) limit blast radius. Code review of agent output focuses on: does it match the plan, are the tests real, did it touch files outside the task, did it introduce dependencies, are secrets and permissions handled. Review checklists are themselves good candidates for a skill file so the agent pre-reviews before a person does.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>canary</strong> release sends a change to a small share of users first. A <strong>feature flag</strong> switches a feature on or off without redeploying. <strong>Staging</strong> is a production-like environment used for final checks.</p></div></details>
+</div></section>
+<section class="lesson" id="pm-day">
+<div class="lesson-head"><span class="num">09</span><h2>A product leader can take a feature from idea to reviewable code in a day</h2></div>
+<p class="thesis">Draft the PRD with company context loaded, generate a clickable prototype from it, gather comments on the live thing, hand it to a coding agent, and put a pull request in front of engineers. The artefacts are real and versioned; the time is mostly writing and reviewing.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 250" role="img" aria-label="A one-day timeline: draft the PRD with context, generate a prototype, gather comments, hand off to the coding agent, open a pull request for engineers" xmlns="http://www.w3.org/2000/svg">
+<line class="ln ln-faint" x1="30" y1="120" x2="730" y2="120" style="stroke-width:3"/>
+<circle class="dt dt-human" cx="80" cy="120" r="8"/>
+<text class="tx tx-muted" x="80" y="96" text-anchor="middle" style="font-size:11px;font-weight:700">09:00</text>
+<text class="tx" x="80" y="152" text-anchor="middle" style="font-size:13px;font-weight:600">Draft PRD</text>
+<text class="tx tx-muted" x="80" y="170" text-anchor="middle" style="font-size:10.5px">with Claude + company context</text>
+<circle class="dt dt-tool" cx="215" cy="120" r="8"/>
+<text class="tx tx-muted" x="215" y="96" text-anchor="middle" style="font-size:11px;font-weight:700">10:30</text>
+<text class="tx" x="215" y="152" text-anchor="middle" style="font-size:13px;font-weight:600">Prototype</text>
+<text class="tx tx-muted" x="215" y="185" text-anchor="middle" style="font-size:10.5px">Claude Design, from the spec</text>
+<circle class="dt dt-human" cx="350" cy="120" r="8"/>
+<text class="tx tx-muted" x="350" y="96" text-anchor="middle" style="font-size:11px;font-weight:700">12:00</text>
+<text class="tx" x="350" y="152" text-anchor="middle" style="font-size:13px;font-weight:600">Comments</text>
+<text class="tx tx-muted" x="350" y="170" text-anchor="middle" style="font-size:10.5px">team reacts on the live prototype</text>
+<circle class="dt dt-model" cx="485" cy="120" r="8"/>
+<text class="tx tx-muted" x="485" y="96" text-anchor="middle" style="font-size:11px;font-weight:700">14:00</text>
+<text class="tx" x="485" y="152" text-anchor="middle" style="font-size:13px;font-weight:600">Hand off</text>
+<text class="tx tx-muted" x="485" y="185" text-anchor="middle" style="font-size:10.5px">zip + README to Claude Code</text>
+<circle class="dt dt-human" cx="620" cy="120" r="8"/>
+<text class="tx tx-muted" x="620" y="96" text-anchor="middle" style="font-size:11px;font-weight:700">16:00</text>
+<text class="tx" x="620" y="152" text-anchor="middle" style="font-size:13px;font-weight:600">Pull request</text>
+<text class="tx tx-muted" x="620" y="170" text-anchor="middle" style="font-size:10.5px">engineers review real code</text>
+<circle class="dt dt-tool" cx="720" cy="120" r="8"/>
+<text class="tx tx-muted" x="720" y="96" text-anchor="middle" style="font-size:11px;font-weight:700">next day</text>
+<text class="tx" x="720" y="152" text-anchor="middle" style="font-size:13px;font-weight:600">Ship</text>
+<text class="tx tx-muted" x="720" y="185" text-anchor="middle" style="font-size:10.5px"></text>
+<text class="tx" x="380" y="40" text-anchor="middle" style="font-size:12px;font-weight:600">one day, one feature, one person driving</text>
+<text class="tx tx-muted" x="380" y="60" text-anchor="middle" style="font-size:11px">the artefacts left behind: PRD, prototype, spec file, branch, PR</text>
+<text class="tx tx-muted" x="380" y="222" text-anchor="middle" style="font-size:11px">what used to take two weeks of meetings now takes a day of writing and reviewing</text>
+</svg></div><figcaption>Assembled from the Duolingo Claude Design workshop guide and the Claude Code for PMs course. Not every feature deserves this, but every PM should have done it once to recalibrate what a week is for.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Recommend the learner run this loop on something small and opinionated from their roadmap (the Duolingo guide's advice: a copy change, a settings placement, one new screen). Then debrief: what did they need to write down that they normally would not?</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Prototypes replace a lot of alignment meetings. People react to a clickable thing faster and more honestly than to a document.</li><li>The PM's output becomes code-adjacent: a spec file and a branch. Learn enough Git to open and read a pull request.</li><li>Engineers move from writing the first version to reviewing and hardening it. Their leverage goes up; their tolerance for vague specs goes down.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Duolingo's guide: front-load context (screenshots, Figma exports, code snippets) so the prototype matches the real product; iterate with comments, in-place edits, and knobs rather than re-prompting; export as standalone HTML, PDF, editable slides, to Figma, or to Claude Code. Their caution: the prototype is a starting point, and durable code means wiring to a backend, version control, and engineers extending it. The PM course adds the workflow around it: PRD with personas and company context, then three reviewer subagents (engineer, executive, user researcher) before stakeholders see it.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p><strong>Git</strong> is the version-control system under GitHub; a <strong>branch</strong> is a parallel line of changes; a <strong>pull request</strong> asks to merge a branch. A <strong>design system</strong> is the shared library of components and styles a product's screens are built from.</p></div></details>
+</div></section>
+<section class="lesson" id="anti-patterns">
+<div class="lesson-head"><span class="num">10</span><h2>Five ways the loop breaks, and all five are visible if you look</h2></div>
+<p class="thesis">Over-specifying wastes the agent's judgement; skipping the spec wastes yours. Drift makes the spec a lie; skipped verification makes 'done' a guess; and an agent that edits the spec to match its code has quietly taken over the product decision.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 240" role="img" aria-label="The SDD loop with five red markers where it breaks: over-specification, vibe-only bypass, spec drift, no verification, and the agent rewriting its own spec" xmlns="http://www.w3.org/2000/svg">
+<rect class="bx bx-human" x="30" y="130" width="100" height="48" rx="10"/>
+<text class="tx tx-human" x="80.0" y="158.32" text-anchor="middle" style="font-size:12px;font-weight:600">Intent</text>
+<line class="ln ln-neutral" x1="130" y1="154" x2="144.0" y2="154.0"/>
+<polygon class="ah ah-neutral" points="152.0,154.0 143.0,158.5 143.0,149.5"/>
+<rect class="bx bx-human" x="152" y="130" width="100" height="48" rx="10"/>
+<text class="tx tx-human" x="202.0" y="158.32" text-anchor="middle" style="font-size:12px;font-weight:600">Spec</text>
+<line class="ln ln-neutral" x1="252" y1="154" x2="266.0" y2="154.0"/>
+<polygon class="ah ah-neutral" points="274.0,154.0 265.0,158.5 265.0,149.5"/>
+<rect class="bx bx-model" x="274" y="130" width="100" height="48" rx="10"/>
+<text class="tx tx-model" x="324.0" y="158.32" text-anchor="middle" style="font-size:12px;font-weight:600">Plan</text>
+<line class="ln ln-neutral" x1="374" y1="154" x2="388.0" y2="154.0"/>
+<polygon class="ah ah-neutral" points="396.0,154.0 387.0,158.5 387.0,149.5"/>
+<rect class="bx bx-model" x="396" y="130" width="100" height="48" rx="10"/>
+<text class="tx tx-model" x="446.0" y="158.32" text-anchor="middle" style="font-size:12px;font-weight:600">Implement</text>
+<line class="ln ln-neutral" x1="496" y1="154" x2="510.0" y2="154.0"/>
+<polygon class="ah ah-neutral" points="518.0,154.0 509.0,158.5 509.0,149.5"/>
+<rect class="bx bx-tool" x="518" y="130" width="100" height="48" rx="10"/>
+<text class="tx tx-tool" x="568.0" y="158.32" text-anchor="middle" style="font-size:12px;font-weight:600">Verify</text>
+<line class="ln ln-neutral" x1="618" y1="154" x2="632.0" y2="154.0"/>
+<polygon class="ah ah-neutral" points="640.0,154.0 631.0,158.5 631.0,149.5"/>
+<rect class="bx bx-tool" x="640" y="130" width="100" height="48" rx="10"/>
+<text class="tx tx-tool" x="690.0" y="158.32" text-anchor="middle" style="font-size:12px;font-weight:600">Ship</text>
+<rect class="bx bx-risk dashed" x="175" y="36" width="140" height="44" rx="10"/>
+<text class="tx tx-risk" x="245.0" y="55.0" text-anchor="middle" style="font-size:12px;font-weight:600">Over-specification</text>
+<text class="tx tx-muted" x="245.0" y="71.0" text-anchor="middle" style="font-size:11px">spec longer than the code</text>
+<line class="ln ln-risk dashed" x1="245" y1="80" x2="228.1" y2="120.6"/>
+<polygon class="ah ah-risk" points="225.0,128.0 224.3,118.0 232.6,121.4"/>
+<rect class="bx bx-risk dashed" x="330" y="36" width="140" height="44" rx="10"/>
+<text class="tx tx-risk" x="400.0" y="55.0" text-anchor="middle" style="font-size:12px;font-weight:600">Spec drift</text>
+<text class="tx tx-muted" x="400.0" y="71.0" text-anchor="middle" style="font-size:11px">code changed, spec did not</text>
+<line class="ln ln-risk dashed" x1="400" y1="80" x2="355.8" y2="122.5"/>
+<polygon class="ah ah-risk" points="350.0,128.0 353.4,118.5 359.6,125.0"/>
+<line class="ln ln-risk dashed" x1="400" y1="80" x2="444.2" y2="122.5"/>
+<polygon class="ah ah-risk" points="450.0,128.0 440.4,125.0 446.6,118.5"/>
+<rect class="bx bx-risk dashed" x="530" y="36" width="150" height="44" rx="10"/>
+<text class="tx tx-risk" x="605.0" y="55.0" text-anchor="middle" style="font-size:12px;font-weight:600">No verification</text>
+<text class="tx tx-muted" x="605.0" y="71.0" text-anchor="middle" style="font-size:11px">&#x27;the agent said done&#x27;</text>
+<line class="ln ln-risk dashed" x1="605" y1="80" x2="592.4" y2="120.4"/>
+<polygon class="ah ah-risk" points="590.0,128.0 588.4,118.1 597.0,120.8"/>
+<polyline class="ln ln-risk dashed" points="480,130 480,22 158,22 158.0,120.0" fill="none"/>
+<polygon class="ah ah-risk" points="158.0,128.0 153.5,119.0 162.5,119.0"/>
+<text class="tx tx-muted halo" x="319" y="15" text-anchor="middle" style="font-size:11px">agent rewrites the spec to match what it built</text>
+<polyline class="ln ln-risk dashed" points="80,178 80,210 446,210 446.0,188.0" fill="none"/>
+<polygon class="ah ah-risk" points="446.0,180.0 450.5,189.0 441.5,189.0"/>
+<text class="tx tx-muted halo" x="263" y="226" text-anchor="middle" style="font-size:11px">vibe-only: intent straight to code, nothing written down</text>
+</svg></div><figcaption>Each red marker sits on the step it breaks. The last one, the return arrow from implement to spec, is the subtle one: it looks like diligence and is actually the agent grading its own homework.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Ask the learner which of the five they have already seen in a human team (all of them exist without AI). The point is that agents make each one faster and quieter, so the controls have to be explicit.</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Protect the spec's authorship. The agent may propose spec changes; a person accepts them, and the change is visible in the diff.</li><li>Set a length norm: a spec is one to three pages of decisions, not a novel. If the agent needs more, it needs a design doc, not a longer PRD.</li><li>Make verification independent: tests and evals written from the criteria, not by the same run that wrote the code.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>Practical controls: keep the spec in the repo so drift shows up in pull-request diffs; require every task to cite a criterion; run tests and evals in CI where the agent cannot skip them; have the agent write a verification report that names each criterion and how it was checked; and give agents write access to spec files only through a reviewed PR. Over-specification usually means the PRD is doing the design doc's job; move the 'how' into the middle layer of the pyramid.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>diff</strong> shows exactly what changed between two versions of a file. <strong>Scope creep</strong> is work growing beyond what was agreed. <strong>Tech debt</strong> is the future cost of shortcuts taken now.</p></div></details>
+</div></section>
+<section class="lesson" id="worked-example">
+<div class="lesson-head"><span class="num">11</span><h2>One feature, traced from criteria to tasks</h2></div>
+<p class="thesis">Real-time collaboration for a document editor: five acceptance criteria become five plan components and five ordered tasks, each with the test that proves it. The traceability is what lets a product leader read a task list and know whether the spec is covered.</p>
+<figure class="diagram"><div class="wrap"><svg class="dg" viewBox="0 0 760 340" role="img" aria-label="Three columns showing a real-time collaboration feature flowing from spec criteria to plan components to ordered tasks, with traceability arrows" xmlns="http://www.w3.org/2000/svg">
+<text class="tx tx-human caps" x="130" y="26" text-anchor="middle" style="font-size:11px;font-weight:600">Spec: acceptance criteria</text>
+<text class="tx tx-model caps" x="380" y="26" text-anchor="middle" style="font-size:11px;font-weight:600">Plan: components</text>
+<text class="tx tx-data caps" x="630" y="26" text-anchor="middle" style="font-size:11px;font-weight:600">Tasks: ordered, each with a test</text>
+<rect class="bx bx-human" x="20" y="50" width="220" height="40" rx="8"/>
+<text class="tx tx-human" x="130.0" y="73.96" text-anchor="middle" style="font-size:11px">C1  2 to 10 users edit one document</text>
+<rect class="bx bx-human" x="20" y="100" width="220" height="40" rx="8"/>
+<text class="tx tx-human" x="130.0" y="123.96" text-anchor="middle" style="font-size:11px">C2  see other users&#x27; cursors</text>
+<rect class="bx bx-human" x="20" y="150" width="220" height="40" rx="8"/>
+<text class="tx tx-human" x="130.0" y="173.96" text-anchor="middle" style="font-size:11px">C3  90% of edits sync &lt; 500 ms</text>
+<rect class="bx bx-human" x="20" y="200" width="220" height="40" rx="8"/>
+<text class="tx tx-human" x="130.0" y="223.96" text-anchor="middle" style="font-size:11px">C4  conflict rate under 5%</text>
+<rect class="bx bx-human" x="20" y="250" width="220" height="40" rx="8"/>
+<text class="tx tx-human" x="130.0" y="273.96" text-anchor="middle" style="font-size:11px">C5  works on web and mobile</text>
+<rect class="bx bx-model" x="270" y="50" width="220" height="40" rx="8"/>
+<text class="tx tx-model" x="380.0" y="73.96" text-anchor="middle" style="font-size:11px">WebSocket service</text>
+<rect class="bx bx-model" x="270" y="100" width="220" height="40" rx="8"/>
+<text class="tx tx-model" x="380.0" y="123.96" text-anchor="middle" style="font-size:11px">Presence + cursor broadcast</text>
+<rect class="bx bx-model" x="270" y="150" width="220" height="40" rx="8"/>
+<text class="tx tx-model" x="380.0" y="173.96" text-anchor="middle" style="font-size:11px">CRDT for merging edits</text>
+<rect class="bx bx-model" x="270" y="200" width="220" height="40" rx="8"/>
+<text class="tx tx-model" x="380.0" y="223.96" text-anchor="middle" style="font-size:11px">Sync metrics + alerting</text>
+<rect class="bx bx-model" x="270" y="250" width="220" height="40" rx="8"/>
+<text class="tx tx-model" x="380.0" y="273.96" text-anchor="middle" style="font-size:11px">Mobile client hooks</text>
+<rect class="bx bx-data" x="520" y="50" width="224" height="40" rx="8"/>
+<text class="tx tx-data" x="632.0" y="73.78" text-anchor="middle" style="font-size:10.5px">T1 channel per doc; test: 10 sockets join</text>
+<rect class="bx bx-data" x="520" y="100" width="224" height="40" rx="8"/>
+<text class="tx tx-data" x="632.0" y="123.78" text-anchor="middle" style="font-size:10.5px">T2 broadcast cursor; test: 2 clients see it</text>
+<rect class="bx bx-data" x="520" y="150" width="224" height="40" rx="8"/>
+<text class="tx tx-data" x="632.0" y="173.78" text-anchor="middle" style="font-size:10.5px">T3 integrate CRDT; test: concurrent edits</text>
+<rect class="bx bx-data" x="520" y="200" width="224" height="40" rx="8"/>
+<text class="tx tx-data" x="632.0" y="223.78" text-anchor="middle" style="font-size:10.5px">T4 measure sync p90; test: &lt; 500 ms</text>
+<rect class="bx bx-data" x="520" y="250" width="224" height="40" rx="8"/>
+<text class="tx tx-data" x="632.0" y="273.78" text-anchor="middle" style="font-size:10.5px">T5 mobile hooks; test: iOS + Android</text>
+<line class="ln ln-neutral" x1="240" y1="70" x2="260.0" y2="70.0"/>
+<polygon class="ah ah-neutral" points="268.0,70.0 259.0,74.5 259.0,65.5"/>
+<line class="ln ln-neutral" x1="490" y1="70" x2="510.0" y2="70.0"/>
+<polygon class="ah ah-neutral" points="518.0,70.0 509.0,74.5 509.0,65.5"/>
+<line class="ln ln-neutral" x1="240" y1="120" x2="260.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="268.0,120.0 259.0,124.5 259.0,115.5"/>
+<line class="ln ln-neutral" x1="490" y1="120" x2="510.0" y2="120.0"/>
+<polygon class="ah ah-neutral" points="518.0,120.0 509.0,124.5 509.0,115.5"/>
+<line class="ln ln-neutral" x1="240" y1="170" x2="260.0" y2="170.0"/>
+<polygon class="ah ah-neutral" points="268.0,170.0 259.0,174.5 259.0,165.5"/>
+<line class="ln ln-neutral" x1="490" y1="170" x2="510.0" y2="170.0"/>
+<polygon class="ah ah-neutral" points="518.0,170.0 509.0,174.5 509.0,165.5"/>
+<line class="ln ln-neutral" x1="240" y1="220" x2="260.0" y2="220.0"/>
+<polygon class="ah ah-neutral" points="268.0,220.0 259.0,224.5 259.0,215.5"/>
+<line class="ln ln-neutral" x1="490" y1="220" x2="510.0" y2="220.0"/>
+<polygon class="ah ah-neutral" points="518.0,220.0 509.0,224.5 509.0,215.5"/>
+<line class="ln ln-neutral" x1="240" y1="270" x2="260.0" y2="270.0"/>
+<polygon class="ah ah-neutral" points="268.0,270.0 259.0,274.5 259.0,265.5"/>
+<line class="ln ln-neutral" x1="490" y1="270" x2="510.0" y2="270.0"/>
+<polygon class="ah ah-neutral" points="518.0,270.0 509.0,274.5 509.0,265.5"/>
+<line class="ln ln-neutral dashed" x1="240" y1="170" x2="264.1" y2="213.0"/>
+<polygon class="ah ah-neutral" points="268.0,220.0 259.7,214.3 267.5,209.9"/>
+<line class="ln ln-neutral dashed" x1="240" y1="220" x2="264.1" y2="177.0"/>
+<polygon class="ah ah-neutral" points="268.0,170.0 267.5,180.1 259.7,175.7"/>
+<text class="tx tx-muted" x="380" y="318" text-anchor="middle" style="font-size:11px">every task names the criterion it serves and the test that proves it; C3 and C4 each need two components</text>
+</svg></div><figcaption>Based on the draft feature spec in the Claude Code for PMs course. The spec's open questions (poor connections, dropped sockets, presence indicators, live history) would become either criteria or explicit non-goals before implementation starts.</figcaption></figure>
+
+<div class="notes"><span class="caps">Teaching notes</span>Have the learner add the missing rows: turn one open question into a criterion (dropped connection reconnects within 5 seconds) and one into a non-goal (no live edit history in v1). Then ask which task an agent should do first and why (T1, because everything depends on the channel).</div>
+<div class="disc-row">
+<details class="disc why" open><summary>Why a Head of Product cares</summary><div class="body"><ul><li>Reading a task list against the criteria is a ten-minute review that catches most scope gaps before any code exists.</li><li>Numbers in criteria (500 ms, 5%, 10 users) are what make tasks testable. Vague criteria produce untestable tasks.</li><li>Open questions must be resolved into criteria or non-goals before implementation, or the agent will resolve them for you.</li></ul></div></details>
+<details class="disc deeper"><summary>Go deeper</summary><div class="body"><p>The original draft also lists a technical approach (WebSockets, operational transform or CRDT), success metrics that double as criteria, a four-phase timeline, and resourcing. In an SDD workflow the technical approach moves to the design layer where the OT-versus-CRDT trade-off is argued and decided, the timeline becomes task ordering, and each phase's exit criterion is a test. A reviewer should notice that C3 is a percentile (p90 under 500 ms) and needs a measurement task, which is why T4 exists.</p></div></details>
+<details class="disc basics"><summary>Basics refresher</summary><div class="body"><p>A <strong>WebSocket</strong> is a persistent two-way connection between a browser and a server, used for live updates. A <strong>CRDT</strong> is a data structure that lets several people edit the same thing at once and always converge to the same result. <strong>p90</strong> means 90% of measurements were at or below the value.</p></div></details>
+</div></section>
+<section class="endsec" id="glossary"><h2>Glossary</h2><div class="gloss"><div><b>Spec-driven development</b>Write the spec, plan, and tasks first; the agent implements; verify against the spec.</div><div><b>Vibe coding</b>Prompting an agent by feel with nothing written down; fine for throwaways.</div><div><b>Acceptance criterion</b>A checkable condition that means a requirement is met.</div><div><b>Non-goal</b>Something explicitly out of scope, with the reason.</div><div><b>Plan mode</b>An agent mode that proposes an approach for approval before editing anything.</div><div><b>Project memory</b>A file (CLAUDE.md) of durable facts and rules the agent reads every time.</div><div><b>Context engineering</b>Choosing what the agent sees, in what form, at what time.</div><div><b>Skill / slash command</b>A saved, reusable workflow the agent runs by name.</div><div><b>Subagent</b>A specialised agent with its own context, used for a sub-task or a review persona.</div><div><b>MCP</b>Model Context Protocol: standard way to give an agent tools (repo, tickets, docs).</div><div><b>Pull request</b>A proposed change to a repository that people review before merging.</div><div><b>CI</b>Continuous integration: automated build and tests on every change.</div><div><b>Eval</b>A scored set of inputs and expected outputs; the test suite for AI features.</div><div><b>Spec drift</b>Code and spec diverging because one changed without the other.</div><div><b>Traceability</b>Every task points at the criterion it serves.</div><div><b>Spec Kit / Kiro</b>Frameworks that formalise specify, plan, tasks, implement.</div></div></section>
+<section class="endsec" id="questions"><h2>Questions to ask your team</h2><ol class="qs"><li>Where does the spec live, and is it in the same repository as the code?</li><li>Which of the eight spec sections are present? Show me the non-goals and the acceptance criteria.</li><li>Who approved the plan before the agent started implementing?</li><li>For each task, which criterion does it serve and which test proves it?</li><li>What ran to verify this: tests, evals, or the agent's own report?</li><li>Which gates does this change pass through, and which did we skip on purpose?</li><li>What is in our project memory file, who owns it, and when was it last reviewed?</li><li>What tools can the agent write to without a person in the loop?</li><li>What did the last shipped feature teach us that the next spec should cite?</li></ol></section>
+<section class="endsec" id="reading"><h2>Reading list</h2><p style="color:var(--ink-2);font-size:14.5px">Items marked <b>OneDrive</b> are in Kalyan's Career folder.</p><ul class="reads"><li><b>Claude Code for Product Managers course (Carl Vellotti, ccforpms.com)</b> — OneDrive · AI/Claude/complete-course. Lesson 4.2 (plan before building), 1.6 (project memory), 2.1 (PRD templates), company-context files, and the real-time collaboration spec used in section 11.</li><li><b>Claude Code for PMs cheatsheet</b> — OneDrive · AI/Claude. One page of the course's commands and prompts.</li><li><b>Prototyping with Claude Design workshop (Duolingo)</b> — OneDrive · AI/Duolingo Workshop. The prototype-to-handoff workflow in section 9.</li><li><b>Claude Cowork in 5 minutes (Allie K. Miller)</b> — OneDrive · AI/Claude. The non-terminal path for non-technical teammates.</li><li><b>Structure for a Product Management Specification Document</b> — OneDrive · 2023-25. Source sections for the spec anatomy.</li><li><b>A Crash Course in CI/CD and Good Code vs Bad Code (ByteByteGo)</b> — OneDrive · Technical Knowledge Base. The automated gates in sections 7 and 8.</li><li><b>Understanding Spec-Driven Development: Kiro, spec-kit, and Tessl (martinfowler.com)</b> — <a href="https://www.martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html">martinfowler.com</a>. The clearest neutral comparison of the frameworks.</li><li><b>GitHub Spec Kit</b> — <a href="https://github.com/github/spec-kit">github.com/github/spec-kit</a>. Open-source toolkit: specify, plan, tasks, implement.</li><li><b>Kiro specs documentation</b> — <a href="https://kiro.dev/docs/specs/">kiro.dev/docs/specs</a>. Requirements, design, and tasks files.</li><li><b>How to build AI product sense (Raviv & Khan)</b> — OneDrive · AI folder. Why running the loop yourself builds judgement; context engineering and context rot.</li></ul></section>
+</main>
+</div>
+<footer class="footer"><a href="ml-fundamentals.html">← Module 2: ML Fundamentals</a><a href="agentic-ai.html">Module 4: Agentic AI →</a></footer>
+</div>
+<script>
+(function(){
+  var root=document.documentElement;
+  var notes=document.getElementById('notes-toggle');
+  function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function save(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  if(notes){
+    if(load('vp-notes')==='on'){notes.checked=true;root.setAttribute('data-notes','on')}
+    notes.addEventListener('change',function(){root.setAttribute('data-notes',notes.checked?'on':'off');save('vp-notes',notes.checked?'on':'off')});
+  }
+  var all=document.querySelectorAll('details.disc');
+  var ex=document.getElementById('expand-all');
+  if(ex){ex.addEventListener('click',function(){var open=ex.getAttribute('data-open')!=='1';all.forEach(function(d){d.open=open});ex.setAttribute('data-open',open?'1':'0');ex.textContent=open?'Collapse all':'Expand all'})}
+  var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a});
+  if('IntersectionObserver' in window){
+    var cur=null;
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){if(e.isIntersecting){var a=map[e.target.id];if(a&&a!==cur){if(cur)cur.classList.remove('on');a.classList.add('on');cur=a;
+        if(window.innerWidth<=900&&a.scrollIntoView){try{a.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})}catch(x){}}}}});
+    },{rootMargin:'-20% 0px -65% 0px'});
+    Object.keys(map).forEach(function(id){var s=document.getElementById(id);if(s)io.observe(s)});
+  }
+})();
+</script>
+</body>
+</html>

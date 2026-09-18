@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Four visual primers for product leaders: AI Foundations, ML Fundamentals, Spec-Driven Development, Agentic AI.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧭%3C/text%3E%3C/svg%3E">
+<title>Visual Primers for Product Leaders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#EBEFF4; --ink:#151A22; --ink-2:#4A5361; --ink-3:#7A8494; --line:#D5DBE4; --line-2:#E6EAF0;
+  --accent:#2A78D6; --accent-ink:#FFFFFF;
+  --data:#2A78D6;  --data-fill:#E2EDFA;
+  --model:#4A3AA7; --model-fill:#E8E5F6;
+  --human:#EB6834; --human-fill:#FBE7DE;
+  --tool:#1B9E6E;  --tool-fill:#DDF3E9;
+  --risk:#E34948;  --risk-fill:#FAE2E2;
+  --neutral:#6B7686; --neutral-fill:#ECEFF3;
+  --shadow:0 1px 2px rgba(21,26,34,.06),0 8px 24px -12px rgba(21,26,34,.18);
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1216; --surface:#171B21; --surface-2:#1F252D; --ink:#EEF1F5; --ink-2:#B9C1CC; --ink-3:#8791A0; --line:#2C343F; --line-2:#242B35;
+  --accent:#5B9BEA; --accent-ink:#0F1216;
+  --data:#5B9BEA;  --data-fill:#17283E;
+  --model:#9C92EC; --model-fill:#26234A;
+  --human:#F2915F; --human-fill:#3F2618;
+  --tool:#3CC48F;  --tool-fill:#123A2B;
+  --risk:#EF6F6F;  --risk-fill:#421D1D;
+  --neutral:#8A94A3; --neutral-fill:#20262E;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding-block:0 48px;padding-inline:16px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,54px);font-weight:800;line-height:1.02;letter-spacing:-.02em}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:700;line-height:1.15}
+p{margin:0}
+.masthead{padding-block:36px 24px;border-bottom:1px solid var(--line);display:grid;gap:14px}
+.series{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.lede{font-size:18px;color:var(--ink-2);max-width:62ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin-top:28px}
+.card{display:grid;gap:10px;align-content:start;padding:22px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+.card p{color:var(--ink-2);font-size:15px}
+.num{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.go{font-size:14px;font-weight:600;color:var(--accent);margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:28px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="masthead">
+  <div class="series">Visual primers for product leaders</div>
+  <h1>AI, ML, specs and agents, as pictures</h1>
+  <p class="lede">Four modules sharing one visual language. Every idea is a diagram first; open the panels inside each module for why it matters, the mechanics, or a basics refresher.</p>
+</header>
+<main class="grid">
+<a class="card" href="ai-foundations.html"><div class="num">Module 1 of 4</div><h2><span aria-hidden="true">🧠</span> AI Foundations</h2><p>What a model actually is, how a chat assistant gets built, and the four ways you can turn one into a product. Every idea is a picture first; open the panels when you want the mechanics or a refresher on the underlying tech.</p><span class="go">Open module →</span></a>
+<a class="card" href="ml-fundamentals.html"><div class="num">Module 2 of 4</div><h2><span aria-hidden="true">📈</span> ML Fundamentals</h2><p>How a model learns from data, how you know whether it is any good, and how it gets from a notebook into a product. This is the ring underneath LLMs, and it still runs most of the AI in production. Sections 04 and 09 carry the diagnostic habits from Andrew Ng's Stanford CS229.</p><span class="go">Open module →</span></a>
+<a class="card" href="spec-driven-development.html"><div class="num">Module 3 of 4</div><h2><span aria-hidden="true">📐</span> Spec-Driven Development</h2><p>When AI agents write the code, the specification becomes the work. This module shows the loop, what a spec has to contain, where people stay in charge, and what a product leader's week looks like when prototypes take hours.</p><span class="go">Open module →</span></a>
+<a class="card" href="agentic-ai.html"><div class="num">Module 4 of 4</div><h2><span aria-hidden="true">🤖</span> Agentic AI</h2><p>Follows Andrew Ng's DeepLearning.AI course 'Agentic AI' (Coursera, updated September 2026) at leadership altitude: the autonomy spectrum, why iteration beats a bigger model, the four design patterns, and the evaluation discipline that separates demos from products.</p><span class="go">Open module →</span></a>
+</main>
+<div class="legend" aria-label="Colour code used in every diagram">
+  <span><i style="background:var(--data)"></i>Data</span>
+  <span><i style="background:var(--model)"></i>Model / compute</span>
+  <span><i style="background:var(--human)"></i>People</span>
+  <span><i style="background:var(--tool)"></i>Tools / systems</span>
+  <span><i style="background:var(--risk)"></i>Risk</span>
+</div>
+</div>
+</body>
+</html>
