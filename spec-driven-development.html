@@ -85,26 +85,33 @@ code{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:
 .modlinks a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--ink-2);background:var(--surface)}
 .modlinks a[aria-current]{border-color:var(--accent);color:var(--accent);font-weight:600}
 
-/* layout */
-.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;align-items:start;padding-top:28px}
-.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);font-size:14px;display:grid;gap:2px;max-height:calc(100vh - 32px);overflow:auto}
-.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-2);padding:6px 10px;border-radius:8px;border-left:2px solid transparent}
+/* layout: one reading column, contents in a drawer */
+.shell{max-width:960px}
+.layout{display:block}
+main{display:grid;gap:56px;min-width:0;padding-top:28px}
+.tocbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:flex;align-items:center;gap:12px;margin-inline:-16px;padding:8px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.tocbtn{flex:none;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.tocbtn:hover{border-color:var(--ink-3)}
+.tocbtn svg{width:16px;height:16px;display:block}
+.tocnow{min-width:0;flex:1;display:flex;gap:8px;align-items:baseline;font-size:14px;color:var(--ink-2);cursor:pointer;white-space:nowrap;overflow:hidden}
+.tocnow span:last-child{overflow:hidden;text-overflow:ellipsis}
+.tocnow .n{font-family:var(--mono);font-size:11px;color:var(--accent)}
+.toc{position:fixed;top:0;bottom:0;left:0;z-index:30;width:min(320px,86vw);background:var(--surface);border-right:1px solid var(--line);box-shadow:var(--shadow);padding:calc(env(safe-area-inset-top,0px) + 14px) 12px 24px;font-size:14px;display:flex;flex-direction:column;gap:2px;overflow:auto;overscroll-behavior:contain;transform:translateX(-105%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s}
+.toc.open{transform:none;visibility:visible;transition:transform .22s ease}
+.tochead{display:flex;justify-content:space-between;align-items:center;padding:0 4px 10px 10px;margin-bottom:6px;border-bottom:1px solid var(--line-2)}
+.tocclose{font:inherit;font-size:22px;line-height:1;background:none;border:0;color:var(--ink-2);cursor:pointer;padding:2px 8px;border-radius:6px}
+.tocclose:hover{background:var(--surface-2);color:var(--ink)}
+.toc a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-2);padding:8px 10px;border-radius:8px;border-left:2px solid transparent}
 .toc a .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);min-width:18px}
-.toc a:hover{background:var(--surface)}
-.toc a.on{color:var(--ink);font-weight:600;background:var(--surface);border-left-color:var(--accent)}
+.toc a:hover{background:var(--surface-2)}
+.toc a.on{color:var(--ink);font-weight:600;background:var(--surface-2);border-left-color:var(--accent)}
 .toc .grp{margin-top:10px}
-main{display:grid;gap:56px;min-width:0}
-@media (max-width:900px){
-  .layout{grid-template-columns:1fr;gap:20px}
-  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;overflow-x:auto;max-height:none;padding-block:8px;margin-inline:-16px;padding-inline:16px;border-bottom:1px solid var(--line);scrollbar-width:none}
-  .toc::-webkit-scrollbar{display:none}
-  .toc a{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface);font-size:13px}
-  .toc a.on{border-color:var(--accent)}
-  .toc .grp{margin-top:0}
-}
+.scrim{position:fixed;inset:0;z-index:25;background:rgba(15,18,22,.38);opacity:0;visibility:hidden;transition:opacity .22s,visibility 0s linear .22s}
+.scrim.open{opacity:1;visibility:visible;transition:opacity .22s}
+@media (prefers-reduced-motion:reduce){.toc,.toc.open,.scrim,.scrim.open{transition:none}}
 
 /* lesson */
-.lesson{display:grid;gap:18px;scroll-margin-top:24px;min-width:0}
+.lesson{display:grid;gap:18px;scroll-margin-top:72px;min-width:0}
 .lesson-head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
 .num{font-family:var(--mono);font-size:13px;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:3px 7px;margin-top:4px}
 .thesis{font-family:var(--display);font-size:clamp(18px,2vw,21px);font-weight:500;line-height:1.35;color:var(--ink);max-width:60ch;border-left:3px solid var(--accent);padding-left:14px}
@@ -133,7 +140,7 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:up
 .tblwrap{overflow-x:auto;min-width:0}
 
 /* end sections */
-.endsec{display:grid;gap:14px;scroll-margin-top:24px;min-width:0}
+.endsec{display:grid;gap:14px;scroll-margin-top:72px;min-width:0}
 .gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .gloss div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink-2)}
 .gloss b{display:block;color:var(--ink);font-family:var(--display);font-size:15px}
@@ -181,7 +188,9 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:up
   </div>
 </header>
 <div class="layout">
-<nav class="toc" aria-label="Sections"><a href="#why-now"><span class="n">01</span><span>Why now</span></a><a href="#loop"><span class="n">02</span><span>The SDD loop</span></a><a href="#spec-anatomy"><span class="n">03</span><span>Anatomy of a spec</span></a><a href="#spec-pyramid"><span class="n">04</span><span>The spec pyramid</span></a><a href="#context"><span class="n">05</span><span>Context engineering</span></a><a href="#tools"><span class="n">06</span><span>Tool landscape</span></a><a href="#criteria-tests"><span class="n">07</span><span>Criteria become tests</span></a><a href="#checkpoints"><span class="n">08</span><span>Human checkpoints</span></a><a href="#pm-day"><span class="n">09</span><span>The PM's new day</span></a><a href="#anti-patterns"><span class="n">10</span><span>Anti-patterns</span></a><a href="#worked-example"><span class="n">11</span><span>Worked example</span></a><a class="grp" href="#glossary"><span class="n">G</span><span>Glossary</span></a><a href="#questions"><span class="n">Q</span><span>Questions to ask</span></a><a href="#reading"><span class="n">R</span><span>Reading list</span></a></nav>
+<div class="tocbar"><button class="tocbtn" type="button" aria-expanded="false" aria-controls="toc"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Contents</button><span class="tocnow"></span></div>
+<div class="scrim"></div>
+<nav class="toc" id="toc" aria-label="Sections"><div class="tochead"><span class="caps">Contents</span><button class="tocclose" type="button" aria-label="Close contents">×</button></div><a href="#why-now"><span class="n">01</span><span>Why now</span></a><a href="#loop"><span class="n">02</span><span>The SDD loop</span></a><a href="#spec-anatomy"><span class="n">03</span><span>Anatomy of a spec</span></a><a href="#spec-pyramid"><span class="n">04</span><span>The spec pyramid</span></a><a href="#context"><span class="n">05</span><span>Context engineering</span></a><a href="#tools"><span class="n">06</span><span>Tool landscape</span></a><a href="#criteria-tests"><span class="n">07</span><span>Criteria become tests</span></a><a href="#checkpoints"><span class="n">08</span><span>Human checkpoints</span></a><a href="#pm-day"><span class="n">09</span><span>The PM's new day</span></a><a href="#anti-patterns"><span class="n">10</span><span>Anti-patterns</span></a><a href="#worked-example"><span class="n">11</span><span>Worked example</span></a><a class="grp" href="#glossary"><span class="n">G</span><span>Glossary</span></a><a href="#questions"><span class="n">Q</span><span>Questions to ask</span></a><a href="#reading"><span class="n">R</span><span>Reading list</span></a></nav>
 <main>
 <section class="lesson" id="why-now">
 <div class="lesson-head"><span class="num">01</span><h2>Coding stopped being the bottleneck, so deciding what to build became the job</h2></div>
@@ -790,13 +799,26 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:up
   var all=document.querySelectorAll('details.disc');
   var ex=document.getElementById('expand-all');
   if(ex){ex.addEventListener('click',function(){var open=ex.getAttribute('data-open')!=='1';all.forEach(function(d){d.open=open});ex.setAttribute('data-open',open?'1':'0');ex.textContent=open?'Collapse all':'Expand all'})}
+  var toc=document.getElementById('toc'),btn=document.querySelector('.tocbtn'),scrim=document.querySelector('.scrim'),xb=document.querySelector('.tocclose'),now=document.querySelector('.tocnow');
+  function setNow(a){if(now)now.innerHTML=a.innerHTML}
+  function openT(){toc.classList.add('open');scrim.classList.add('open');btn.setAttribute('aria-expanded','true');var c=toc.querySelector('a.on')||toc.querySelector('a');setTimeout(function(){if(c)c.focus()},60)}
+  function closeT(f){toc.classList.remove('open');scrim.classList.remove('open');btn.setAttribute('aria-expanded','false');if(f)btn.focus()}
+  if(toc&&btn){
+    btn.addEventListener('click',function(){toc.classList.contains('open')?closeT(true):openT()});
+    if(now)now.addEventListener('click',openT);
+    scrim.addEventListener('click',function(){closeT(true)});
+    xb.addEventListener('click',function(){closeT(true)});
+    toc.addEventListener('click',function(e){if(e.target.closest('a'))closeT(false)});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&toc.classList.contains('open'))closeT(true)});
+    var first=toc.querySelector('a');if(first)setNow(first);
+  }
   var links=[].slice.call(document.querySelectorAll('.toc a[href^="#"]'));
   var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a});
   if('IntersectionObserver' in window){
     var cur=null;
     var io=new IntersectionObserver(function(es){
       es.forEach(function(e){if(e.isIntersecting){var a=map[e.target.id];if(a&&a!==cur){if(cur)cur.classList.remove('on');a.classList.add('on');cur=a;
-        if(window.innerWidth<=900&&a.scrollIntoView){try{a.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})}catch(x){}}}}});
+        setNow(a);}}});
     },{rootMargin:'-20% 0px -65% 0px'});
     Object.keys(map).forEach(function(id){var s=document.getElementById(id);if(s)io.observe(s)});
   }
