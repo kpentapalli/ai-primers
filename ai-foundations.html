@@ -272,8 +272,7 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:up
 <text class="tx tx-tool" x="405.0" y="78.68" text-anchor="middle" style="font-size:13px;font-weight:600">Program runs</text>
 <rect class="bx bx-neutral" x="540" y="50" width="130" height="48" rx="10"/>
 <text class="tx tx-neutral" x="605.0" y="78.68" text-anchor="middle" style="font-size:13px;font-weight:600">Answers</text>
-<line class="ln ln-neutral" x1="150" y1="74" x2="160.0" y2="74.0"/>
-<polygon class="ah ah-neutral" points="168.0,74.0 159.0,78.5 159.0,69.5"/>
+<text class="tx tx-muted" x="160" y="80" text-anchor="middle" style="font-size:18px;font-weight:700">+</text>
 <line class="ln ln-neutral" x1="280" y1="74" x2="320.0" y2="74.0"/>
 <polygon class="ah ah-neutral" points="328.0,74.0 319.0,78.5 319.0,69.5"/>
 <line class="ln ln-neutral" x1="480" y1="74" x2="530.0" y2="74.0"/>
@@ -291,8 +290,7 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:up
 <rect class="bx bx-model" x="540" y="160" width="130" height="48" rx="10"/>
 <text class="tx tx-model" x="605.0" y="181.0" text-anchor="middle" style="font-size:13px;font-weight:600">Rules</text>
 <text class="tx tx-muted" x="605.0" y="197.0" text-anchor="middle" style="font-size:11px">= the model</text>
-<line class="ln ln-neutral" x1="150" y1="184" x2="160.0" y2="184.0"/>
-<polygon class="ah ah-neutral" points="168.0,184.0 159.0,188.5 159.0,179.5"/>
+<text class="tx tx-muted" x="160" y="190" text-anchor="middle" style="font-size:18px;font-weight:700">+</text>
 <line class="ln ln-neutral" x1="280" y1="184" x2="320.0" y2="184.0"/>
 <polygon class="ah ah-neutral" points="328.0,184.0 319.0,188.5 319.0,179.5"/>
 <line class="ln ln-neutral" x1="480" y1="184" x2="530.0" y2="184.0"/>
@@ -411,8 +409,8 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:up
 <rect class="bx bx-model" x="396" y="236" width="156" height="34" rx="10"/>
 <text class="tx tx-model" x="474.0" y="257.32" text-anchor="middle" style="font-size:12px;font-weight:600">Reward model</text>
 <text class="tx tx-muted" x="474" y="292" text-anchor="middle" style="font-size:10px">learns what humans preferred</text>
-<line class="ln ln-model dashed" x1="530" y1="190" x2="530.0" y2="226.0"/>
-<polygon class="ah ah-model" points="530.0,234.0 525.5,225.0 534.5,225.0"/>
+<line class="ln ln-model dashed" x1="530" y1="236" x2="530.0" y2="200.0"/>
+<polygon class="ah ah-model" points="530.0,192.0 534.5,201.0 525.5,201.0"/>
 <text class="tx" x="20" y="218" text-anchor="middle" style="font-size:1px"></text>
 </svg></div><figcaption>Stages 1 to 3 happen inside the model lab. Stage 4 is where product teams live: the same aligned model becomes very different products depending on prompt, tools, and guardrails.</figcaption></figure>
 
@@ -542,8 +540,8 @@ th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:up
 <line class="ln ln-data dashed" x1="565" y1="106" x2="402.0" y2="194.2"/>
 <polygon class="ah ah-data" points="395.0,198.0 400.8,189.8 405.1,197.7"/>
 <text class="tx tx-muted halo" x="488.5" y="139.4" text-anchor="middle" style="font-size:11px">search the index</text>
-<polyline class="ln ln-human" points="700,256 700,296 208.0,296.0" fill="none"/>
-<polygon class="ah ah-human" points="200.0,296.0 209.0,291.5 209.0,300.5"/>
+<polyline class="ln ln-human" points="700,256 700,296 90,296 90.0,266.0" fill="none"/>
+<polygon class="ah ah-human" points="90.0,258.0 94.5,267.0 85.5,267.0"/>
 <text class="tx tx-muted halo" x="450" y="288" text-anchor="middle" style="font-size:11px">answer with citations to the passages used</text>
 </svg></div><figcaption>The top lane runs whenever documents change; the bottom lane runs on every question. The dashed arrow is the actual retrieval: nearest neighbours in vector space.</figcaption></figure>
 
